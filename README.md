@@ -43,3 +43,14 @@ docker cp "chemin_vers_fichier\kaggle.json" hadoop-master:/root/.config/kaggle/
 hadoop fs -mkdir dossier_projet
 
 hadoop fs -put climate_data /dossier_projet
+
+
+
+git add <file_name>  # Pour un fichier spécifique
+git add .            # Pour tous les fichiers dans le dossier actuel
+
+git commit -m "Votre message ici"
+
+git push origin main
+
+git pull origin main
