@@ -5,7 +5,7 @@ from pyspark.sql.functions import col
 spark = SparkSession.builder.appName("chargement_dataset").getOrCreate()
 
 #Chargement du fichier CSV depuis hadoop fs:
-df1 = spark.read.option("delimiter",",").csv("hdfs:///dossier_projet/GlobalLandTemperaturesByCity.csv", header=True, inferSchema=True)
+df1 = spark.read.option("delimiter",",").csv("hdfs:///projet/GlobalLandTemperaturesByCity.csv", header=True, inferSchema=True)
 print("Temperatures par ville :" )
 print(df1.columns)
 
