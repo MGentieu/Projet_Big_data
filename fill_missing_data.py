@@ -1,7 +1,22 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
 from pyspark.sql.types import DoubleType
+from pyspark.sql import Row
 import sys
+import time
+import subprocess
+
+
+def rename_hdfs_file(hdfs_path):
+    # Fusionner si nécessaire
+    subprocess.run(["hdfs", "dfs", "-rm", f"{hdfs_path}/_SUCCESS"], check=True)  # Supprime _SUCCESS
+    subprocess.run([
+        "hdfs", "dfs", "-mv",
+        f"{hdfs_path}/part-00000-*",  # Part-00000 avec identifiant aléatoire
+        f"{hdfs_path}/final_output.csv"  # Nouveau nom de fichier
+    ], check=True)
+    print(f"Le fichier a été renommé en 'final_output.csv' dans le répertoire HDFS : {hdfs_path}")
+
 
 def process_partition(rows):
 	# On utilise une copie de référence des lignes pour ne pas affecter les calculs suivants
@@ -38,10 +53,17 @@ def process_partition(rows):
 
 			# Remplir les valeurs manquantes avec ces moyennes
 			rows[i] = (rows[i][0], avg_temp, avg_uncert, rows[i][3])
+	"""
+	print('\n')
+	print('\n')
+	print('Partition après traitement :')
+	print('\n')
+	print('\n')
+	print(rows)
+	"""
+	return rows
 
-			return rows
-
-def fill_missing_values(file_path, output_path):
+def fill_missing_values(file_path, output_path, local_output_file):
         # Initialiser une session Spark
 	spark = SparkSession.builder \
 	.appName("Handle Missing Values") \
@@ -62,14 +84,29 @@ def fill_missing_values(file_path, output_path):
 
 	# Appliquer le traitement partition par partition
 	filled_rdd = original_rdd.mapPartitions(lambda partition: process_partition(partition))
+	print("Exemple de lignes dans le RDD traité :")
+	print(filled_rdd.take(5))
 
 	# Convertir l'RDD corrigé en DataFrame
-	filled_df = spark.createDataFrame(filled_rdd, schema=df.schema)
-
+	#filled_df = spark.createDataFrame(filled_rdd, schema=df.schema)
+	#filled_df = filled_rdd.map(lambda x:Row(dt=x[0],AverageTemperature=x[1],AverageTemperatureUncertainty=x[2],Country=x[3]).toDF()
+	filled_df = spark.createDataFrame(filled_rdd, schema=["dt", "AverageTemperature", "AverageTemperatureUncertainty", "Country"])
+	filled_df.show(15)
 	# Sauvegarder le DataFrame traité
-	filled_df.write.csv(output_path, header=True)
+	#filled_df.write.csv(output_path, header=True)
+	#filled_df.write.option("header", True).mode("overwrite").csv(output_path)
+	# Regrouper les partitions en une seule
+	filled_df.coalesce(1).write.option("header", True).mode("overwrite").csv(output_path)
 
-	print(f"Le fichier traité a été sauvegardé dans {output_path}.")
+	time.sleep(1)
+	# Fusionner les fichiers CSV avec la commande Hadoop directement dans le code
+	#print("Fusion des fichiers en un fichier unique local...")
+	#hdfs_merge_command = ["hdfs", "dfs", "-getmerge", output_path, local_output_file]
+	#subprocess.run(hdfs_merge_command, check=True)
+	#print(f"Le fichier fusionné a été sauvegardé localement sous : {local_output_file}")
+	
+	rename_hdfs_file(output_path)
+
 
 if __name__ == "__main__":
 	#if len(sys.argv) != 3:
@@ -78,9 +115,10 @@ if __name__ == "__main__":
 
 	#input_csv_path = sys.argv[1]
 	#output_csv_path = sys.argv[2]
-	input_csv_path = "hdfs:///user/root/projet/GlobalLandTemperaturesByMajorCity.csv"
+	input_csv_path = "hdfs:///user/root/projet/GlobalLandTemperaturesByCountry.csv"
 	output_csv_path = "hdfs:///user/root/projet/test.csv"
+	local_csv_output_file = "hdfs:///user/root/projet/test_final.csv"
 	# Appeler la fonction pour traiter le fichier
-	fill_missing_values(input_csv_path, output_csv_path)
+	fill_missing_values(input_csv_path, output_csv_path, local_csv_output_file)
 
 
