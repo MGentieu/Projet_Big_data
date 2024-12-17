@@ -10,3 +10,4 @@ print("Temperatures par ville :" )
 print(df1.columns)
 
 df1.show(30)
+
