@@ -7,7 +7,6 @@ from pyspark.sql import SparkSession
 import pandas as pd
 import matplotlib.pyplot as plt
 
-
 # Étape 1 : Initialisation de la session Spark
 spark = SparkSession.builder \
     .appName("TemperatureEvolution") \
@@ -22,33 +21,38 @@ df.show()
 # Étape 3 : Sélection des colonnes pertinentes
 df = df.select("dt", "LandAverageTemperature")
 
-# Étape 4 : Conversion des données Spark en Pandas
-df_pd = df.toPandas()
+# Étape 4 : Extraction de l'année à partir de la colonne 'dt'
+from pyspark.sql.functions import year
+df = df.withColumn("year", year(df["dt"]))
 
-# Convertir la colonne 'dt' en format datetime pour une meilleure gestion des dates dans Pandas
-df_pd['dt'] = pd.to_datetime(df_pd['dt'])
+# Étape 5 : Calcul de la température moyenne par année
+df_yearly_avg = df.groupBy("year").avg("LandAverageTemperature").withColumnRenamed("avg(LandAverageTemperature)", "YearlyAverageTemperature")
 
-# Trier les données par date (au cas où elles ne le seraient pas déjà)
-df_pd = df_pd.sort_values(by="dt")
+# Conversion en Pandas pour la visualisation
+df_pd = df_yearly_avg.toPandas()
 
-# Étape 5 : Visualisation avec Matplotlib
+# Trier les données par année
+df_pd = df_pd.sort_values(by="year")
+
+# Étape 6 : Visualisation avec Matplotlib
 plt.figure(figsize=(12, 6))
-plt.scatter(df_pd['dt'], df_pd['LandAverageTemperature'], color='blue', label='Température moyenne', s=10)
+plt.plot(df_pd['year'], df_pd['YearlyAverageTemperature'], color='blue', label='Température moyenne annuelle')
 
 # Ajout des détails au graphique
-plt.title("Évolution de la température au fil du temps", fontsize=16)
-plt.xlabel("Temps", fontsize=12)
+plt.title("Évolution de la température moyenne annuelle", fontsize=16)
+plt.xlabel("Année", fontsize=12)
 plt.ylabel("Température moyenne (°C)", fontsize=12)
 plt.grid(True, linestyle='--', alpha=0.6)
 plt.legend(fontsize=12)
 plt.tight_layout()
 
 # Sauvegarder le graphique en tant qu'image PNG
-plt.savefig("temperature_evolution.png")
-print("Graphique sauvegardé sous le nom 'temperature_evolution.png'.")
+plt.savefig("temperature_evolution_yearly.png")
+print("Graphique sauvegardé sous le nom 'temperature_evolution_yearly.png'.")
 
 # Arrêt de la session Spark
 spark.stop()
+
 
 
 
