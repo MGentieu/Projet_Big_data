@@ -5,6 +5,7 @@ from pyspark.sql.types import IntegerType
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 import numpy as np
+from sklearn.metrics import mean_squared_error, r2_score
 
 
 # Fonction pour traiter la colonne 'dt'
@@ -31,6 +32,34 @@ def process_date_column(df):
         print("La colonne 'dt' est absente dans le DataFrame.")
 
     return df
+
+def evaluate_regression_model(model, X_test, y_test):
+    """
+    Évalue et affiche la performance d'un modèle de régression linéaire.
+
+    Args:
+    - model : Le modèle de régression déjà entraîné (par ex. sklearn.linear_model.LinearRegression).
+    - X_test : Données de test (indépendantes).
+    - y_test : Valeurs réelles correspondantes (cibles).
+    """
+    # Prédictions sur le jeu de test
+    y_pred = model.predict(X_test)
+
+    # Calcul du RMSE
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+
+    # Calcul du coefficient de détermination R²
+    r2 = r2_score(y_test, y_pred)
+
+    # Calcul du pourcentage d'erreur moyenne relative
+    relative_errors = np.abs((y_test - y_pred) / y_test) * 100
+    mean_relative_error = np.mean(relative_errors)
+
+    # Affichage des résultats
+    print("\n--- Évaluation du Modèle ---")
+    print(f"RMSE : {rmse:.4f}")
+    print(f"R² : {r2:.4f}")
+    print(f"Pourcentage d'erreur moyenne relative : {mean_relative_error:.2f} %")
 
 
 spark = SparkSession.builder \
@@ -75,6 +104,8 @@ plt.ylabel("Température moyenne (°C)", fontsize=12)
 plt.grid(True, linestyle='--', alpha=0.6)
 plt.legend(fontsize=12)
 plt.tight_layout()
+
+evaluate_regression_model(model, X, y)
 
 plt.savefig("temperature_evolution_regression.png")
 print("Graphique sauvegardé sous le nom 'temperature_evolution_regression.png'.")
