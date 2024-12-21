@@ -1,60 +1,84 @@
-import pandas as pd
+import os
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, split, to_date
+from pyspark.ml.feature import StandardScaler
+from pyspark.ml.clustering import KMeans
 import matplotlib.pyplot as plt
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
+import pandas as pd
 
-# Chargement du dataset
-df = pd.read_csv('../datasets/GlobalLandTemperaturesByCountry.csv')
+# Fonction pour traiter la colonne 'dt'
+def process_date_column(df):
+    """
+    Traite la colonne 'dt' d'un DataFrame Spark, la divise en trois colonnes : 'year', 'month', 'day'.
+    La colonne 'dt' est ensuite supprimée.
+
+    Args:
+    df (DataFrame): DataFrame Spark contenant la colonne 'dt'.
+
+    Returns:
+    DataFrame: DataFrame modifié avec les nouvelles colonnes 'year', 'month', 'day'.
+    """
+    if "dt" in df.columns:
+        # Séparer la colonne 'dt' en trois colonnes : 'year', 'month', 'day'
+        df = df.withColumn("year", split(col("dt"), "-").getItem(0).cast(IntegerType()))
+        df = df.withColumn("month", split(col("dt"), "-").getItem(1).cast(IntegerType()))
+        df = df.withColumn("day", split(col("dt"), "-").getItem(2).cast(IntegerType()))
+
+        # Supprimer la colonne 'dt'
+        df = df.drop("dt")
+    else:
+        print("La colonne 'dt' est absente dans le DataFrame.")
+
+    return df
+
+# Initialisation de la session Spark
+spark = SparkSession.builder \
+    .appName("TemperatureClusteringTunisia") \
+    .getOrCreate()
+
+
+df = spark.read.csv("hdfs:///user/root/projet/GlobalTemperaturesByCountry.csv", header=True, inferSchema=True)
 
 # Filtrer les données pour la Tunisie
-df_tunisia = df[df['Country'] == 'Tunisia']
+df_tunisia = df.filter(df['Country'] == 'Tunisia')
 
-# Convertir la colonne 'dt' en format datetime
-df_tunisia['dt'] = pd.to_datetime(df_tunisia['dt'], format='%Y-%m-%d')
+df_tunisia = df_tunisia.withColumn('dt', to_date(col('dt'), 'yyyy-MM-dd'))
+df_tunisia = process_date_column(df_tunisia)
 
-# Trier les données par date
-df_tunisia = df_tunisia.sort_values('dt')
 
-# Extraire les températures moyennes pour le clustering
-temperatures = df_tunisia[['AverageTemperature']].dropna()
+# Sélectionner les colonnes nécessaires : 'dt' et 'AverageTemperature'
+df_tunisia_temp = df_tunisia.select('year', 'month', 'AverageTemperature').dropna()
 
-# Vérifier la longueur des données après suppression des NaN
-print("Longueur des données après suppression des NaN:", len(temperatures))
+# Normalisation des températures
+scaler = StandardScaler(inputCol="AverageTemperature", outputCol="scaledTemp")
+df_tunisia_temp = scaler.fit(df_tunisia_temp).transform(df_tunisia_temp)
 
-# Normaliser les données (important pour le K-Means)
-scaler = StandardScaler()
-temperatures_scaled = scaler.fit_transform(temperatures)
+# Appliquer KMeans avec 3 clusters
+kmeans = KMeans(k=3, featuresCol="scaledTemp", predictionCol="Cluster")
+model = kmeans.fit(df_tunisia_temp)
+df_tunisia_temp = model.transform(df_tunisia_temp)
 
-# Appliquer K-Means avec 2 clusters
-kmeans = KMeans(n_clusters=3, random_state=42)
 
-# Ajouter la colonne Cluster à df_tunisia en utilisant .loc pour éviter l'avertissement
-df_tunisia.loc[temperatures.index, 'Cluster'] = kmeans.fit_predict(temperatures_scaled)
+# Convertir en Pandas pour la visualisation
+df_tunisia_temp_pd = df_tunisia_temp.select('year', 'month', 'AverageTemperature', 'Cluster').toPandas()
 
-# Visualisation des résultats
+# Visualisation des résultats du clustering
 plt.figure(figsize=(10, 6))
-
-# Tracer les points avec les couleurs des clusters
-plt.scatter(df_tunisia['dt'], df_tunisia['AverageTemperature'], c=df_tunisia['Cluster'], cmap='viridis', s=10)
-
-# Ajouter le titre et les labels
-plt.title('Clustering des températures en Tunisie (2 clusters)', fontsize=16)
-plt.xlabel('Date', fontsize=12)
+plt.scatter(df_tunisia_temp_pd['year'], df_tunisia_temp_pd['AverageTemperature'], c=df_tunisia_temp_pd['Cluster'], cmap='viridis', s=10)
+plt.title('Clustering des températures en Tunisie (3 clusters)', fontsize=16)
+plt.xlabel('Année', fontsize=12)
 plt.ylabel('Température moyenne (°C)', fontsize=12)
 plt.grid(True, linestyle='--', alpha=0.6)
-
-# Afficher la légende
 plt.legend(title='Cluster')
 
-# Sauvegarder l'image
-
-# Afficher le graphique
-plt.show()
-
+# Sauvegarde du graphique
+plt.savefig("temperature_clustering_tunisia.png")
+print("Graphique sauvegardé sous le nom 'temperature_clustering_tunisia.png'.")
 
 # Compter le nombre de valeurs dans chaque cluster
-cluster_counts = df_tunisia['Cluster'].value_counts()
-
-# Afficher le nombre de valeurs par cluster
+cluster_counts = df_tunisia_temp.groupBy('Cluster').count().collect()
 print("Nombre de valeurs par cluster :")
-print(cluster_counts)
+for row in cluster_counts:
+    print(f"Cluster {row['Cluster']}: {row['count']} occurrences")
+
+spark.stop()
