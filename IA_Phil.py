@@ -7,6 +7,38 @@ from pyspark.sql import SparkSession
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, split
+from pyspark.sql.types import IntegerType
+
+
+def process_date_column(df):
+    """
+    Traite la colonne 'dt' d'un DataFrame Spark, la divise en trois colonnes : 'year', 'month', 'day'.
+    La colonne 'dt' est ensuite supprimée.
+
+    Args:
+    df (DataFrame): DataFrame Spark contenant la colonne 'dt'.
+
+    Returns:
+    DataFrame: DataFrame modifié avec les nouvelles colonnes 'year', 'month', 'day'.
+    """
+    if "dt" in df.columns:
+        # Séparer la colonne 'dt' en trois colonnes : 'year', 'month', 'day'
+        df = df.withColumn("year", split(col("dt"), "-").getItem(0).cast(IntegerType()))
+        df = df.withColumn("month", split(col("dt"), "-").getItem(1).cast(IntegerType()))
+        df = df.withColumn("day", split(col("dt"), "-").getItem(2).cast(IntegerType()))
+
+        # Supprimer la colonne 'dt'
+        df = df.drop("dt")
+    else:
+        print("La colonne 'dt' est absente dans le DataFrame.")
+
+    return df
+
+
+
+
 # Étape 1 : Initialisation de la session Spark
 spark = SparkSession.builder \
     .appName("TemperatureEvolution") \
@@ -21,9 +53,8 @@ df.show()
 # Étape 3 : Sélection des colonnes pertinentes
 df = df.select("dt", "LandAverageTemperature")
 
-# Étape 4 : Extraction de l'année à partir de la colonne 'dt'
-from pyspark.sql.functions import year
-df = df.withColumn("year", year(df["dt"]))
+# Étape 4 : Traitement de la colonne 'dt' pour extraire l'année, le mois et le jour
+df = process_date_column(df)
 
 # Étape 5 : Calcul de la température moyenne par année
 df_yearly_avg = df.groupBy("year").avg("LandAverageTemperature").withColumnRenamed("avg(LandAverageTemperature)", "YearlyAverageTemperature")
