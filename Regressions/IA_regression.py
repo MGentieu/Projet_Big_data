@@ -1,6 +1,6 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, split, when, sum as spark_sum
-from pyspark.sql.types import IntegerType, DoubleType
+from pyspark.sql.types import IntegerType
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
@@ -73,6 +73,9 @@ df = df.select("dt", "LandAverageTemperature", "LandAverageTemperatureUncertaint
 
 # Traitement de la colonne 'dt' pour extraire l'année, le mois et le jour
 df = process_date_column(df)
+
+# Filtrer pour ne conserver que les années après 1850
+df = df.filter(col("year") >= 1850)
 
 # Ajouter une colonne de poids
 df = df.withColumn(
