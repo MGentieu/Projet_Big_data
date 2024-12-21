@@ -43,6 +43,18 @@ def evaluate_regression_model(model, X_test, y_test):
     - X_test : Données de test (indépendantes).
     - y_test : Valeurs réelles correspondantes (cibles).
     """
+    # Étape 6 : Visualisation avec Matplotlib (Tendance sur tout l'ensemble de données)
+    plt.figure(figsize=(12, 6))
+    plt.plot(df_pd['year'], df_pd['YearlyAverageTemperature'], color='blue', label='Température moyenne annuelle')
+    plt.plot(df_pd['year'], model.predict(X), color='red', label='Tendance (Régression Linéaire)', linestyle='--')
+
+    plt.title("Évolution de la température moyenne annuelle avec tendance", fontsize=16)
+    plt.xlabel("Année", fontsize=12)
+    plt.ylabel("Température moyenne (°C)", fontsize=12)
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.legend(fontsize=12)
+    plt.tight_layout()
+
     # Prédictions sur le jeu de test
     y_pred = model.predict(X_test)
 
@@ -90,28 +102,16 @@ y = df_pd['YearlyAverageTemperature'].values  # Température moyenne annuelle (v
 # Division des données en ensembles d'entraînement (70%) et de test (30%)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
+
+
 # Création et entraînement du modèle de régression linéaire
 model = LinearRegression()
 model.fit(X_train, y_train)
-
 # Génération des prédictions pour l'ensemble d'entraînement et de test
 y_pred_train = model.predict(X_train)
 y_pred_test = model.predict(X_test)
 
-# Étape 6 : Visualisation avec Matplotlib (Tendance sur tout l'ensemble de données)
-plt.figure(figsize=(12, 6))
-plt.plot(df_pd['year'], df_pd['YearlyAverageTemperature'], color='blue', label='Température moyenne annuelle')
-plt.plot(df_pd['year'], model.predict(X), color='red', label='Tendance (Régression Linéaire)', linestyle='--')
 
-plt.title("Évolution de la température moyenne annuelle avec tendance", fontsize=16)
-plt.xlabel("Année", fontsize=12)
-plt.ylabel("Température moyenne (°C)", fontsize=12)
-plt.grid(True, linestyle='--', alpha=0.6)
-plt.legend(fontsize=12)
-plt.tight_layout()
-
-# Évaluation sur l'ensemble de test
-print("\n--- Évaluation sur l'ensemble complet ---")
 evaluate_regression_model(model, X, y)
 
 # Sauvegarde du graphique
