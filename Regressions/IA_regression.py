@@ -83,6 +83,8 @@ df.show()
 
 df = df.select("dt", "LandAverageTemperature")
 
+df = df.filter(col("dt").cast(IntegerType()) >= 1850)
+
 # Étape 4 : Traitement de la colonne 'dt' pour extraire l'année, le mois et le jour
 df = process_date_column(df)
 
