@@ -18,3 +18,7 @@ def execute_command(command):
 execute_command("spark-submit --deploy-mode client --master local[2] fill_missing_GLTBC.py")  # Remplacez par la commande que vous voulez exécuter
 
 execute_command("spark-submit --deploy-mode client --master local[2] fill_missing_GLTBMC.py")
+
+execute_command("spark-submit --deploy-mode client --master local[2] TransfoDate.py")
+
+execute_command("spark-submit --deploy-mode client --master local[2] genere_graphiques.py")

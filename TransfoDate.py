@@ -71,8 +71,8 @@ def process_csv_files(csv_files, output_dir):
 if __name__ == "__main__":
     # Liste des fichiers CSV à traiter
     csv_files = [
-        "hdfs:///user/root/projet/GlobalLandTemperaturesByCountry.csv",
-        "hdfs:///user/root/projet/GlobalLandTemperaturesByMajorCity.csv",
+        "hdfs:///user/root/projet/GLTBC.csv",
+        "hdfs:///user/root/projet/GLTBMC.csv",
         "hdfs:///user/root/projet/GlobalTemperatures.csv",
         "hdfs:///user/root/projet/GlobalLandTemperaturesByState.csv",
         "hdfs:///user/root/projet/GlobalLandTemperaturesByCity.csv"
