@@ -1,65 +1,68 @@
-import os
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, to_date
-from pyspark.ml.feature import StandardScaler, VectorAssembler
-from pyspark.ml.clustering import KMeans
-import matplotlib.pyplot as plt
-import pandas as pd
+from pyspark.sql.functions import col, to_date, month, when
+from pyspark.ml.feature import VectorAssembler, StringIndexer
+from pyspark.ml.classification import LogisticRegression
+from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 
 # Initialisation de la session Spark
 spark = SparkSession.builder \
-    .appName("TemperatureClusteringTunisia") \
+    .appName("TemperatureSeasonPrediction") \
     .getOrCreate()
 
-# Charger le dataset depuis HDFS (ou stockage local compatible avec Hadoop)
+# Charger le dataset depuis un fichier local ou HDFS
 df = spark.read.csv("hdfs:///user/root/projet/GlobalLandTemperaturesByCity.csv", header=True, inferSchema=True)
 
 # Filtrer les données pour la Tunisie
 df_tunisia = df.filter(df['Country'] == 'Tunisia')
 
-# Convertir la colonne 'dt' en type date sans séparer les colonnes
+# Convertir la colonne 'dt' en type date
 df_tunisia = df_tunisia.withColumn('dt', to_date(col('dt'), 'yyyy-MM-dd'))
 
-# Sélectionner les colonnes nécessaires : 'dt' et 'AverageTemperature'
-df_tunisia_temp = df_tunisia.select('dt', 'AverageTemperature').dropna()
+# Ajouter une colonne 'Month' pour extraire le mois à partir de la date
+df_tunisia = df_tunisia.withColumn('Month', month(col('dt')))
 
-# Utilisation de VectorAssembler pour transformer 'AverageTemperature' en un vecteur
+# Créer une colonne catégorielle "Season" en fonction du mois
+df_tunisia = df_tunisia.withColumn(
+    'Season',
+    when((col('Month') == 12) | (col('Month') <= 2), 'Winter')
+    .when((col('Month') >= 3) & (col('Month') <= 5), 'Spring')
+    .when((col('Month') >= 6) & (col('Month') <= 8), 'Summer')
+    .otherwise('Autumn')
+)
+
+# Garder les colonnes nécessaires et supprimer les lignes avec des valeurs nulles
+df_tunisia = df_tunisia.select('AverageTemperature', 'Season').dropna()
+
+# Convertir la colonne catégorielle "Season" en une colonne numérique à l'aide de StringIndexer
+indexer = StringIndexer(inputCol="Season", outputCol="SeasonIndex")
+df_tunisia = indexer.fit(df_tunisia).transform(df_tunisia)
+
+# Préparer les données pour la régression logistique
 assembler = VectorAssembler(inputCols=["AverageTemperature"], outputCol="features")
-df_tunisia_temp = assembler.transform(df_tunisia_temp)
+df_tunisia = assembler.transform(df_tunisia)
 
-# Normalisation des températures avec StandardScaler
-scaler = StandardScaler(inputCol="features", outputCol="scaledTemp")
-df_tunisia_temp = scaler.fit(df_tunisia_temp).transform(df_tunisia_temp)
+# Séparer les données en ensemble d'entraînement et de test
+train_data, test_data = df_tunisia.randomSplit([0.8, 0.2], seed=42)
 
-# Appliquer KMeans avec 3 clusters
-kmeans = KMeans(k=3, featuresCol="scaledTemp", predictionCol="Cluster")
-model = kmeans.fit(df_tunisia_temp)
-df_tunisia_temp = model.transform(df_tunisia_temp)
+# Définir le modèle de régression logistique
+lr = LogisticRegression(featuresCol="features", labelCol="SeasonIndex", maxIter=10)
 
-# Convertir en Pandas pour la visualisation
-df_tunisia_temp_pd = df_tunisia_temp.select('dt', 'AverageTemperature', 'Cluster').toPandas()
+# Entraîner le modèle
+lr_model = lr.fit(train_data)
 
-# Visualisation des résultats du clustering
-plt.figure(figsize=(10, 6))
-plt.scatter(df_tunisia_temp_pd['dt'], df_tunisia_temp_pd['AverageTemperature'], c=df_tunisia_temp_pd['Cluster'], cmap='viridis', s=10)
-plt.title('Clustering des températures en Tunisie (3 clusters)', fontsize=16)
-plt.xlabel('Date', fontsize=12)
-plt.ylabel('Température moyenne (°C)', fontsize=12)
-plt.grid(True, linestyle='--', alpha=0.6)
-plt.legend(title='Cluster')
+# Faire des prédictions sur l'ensemble de test
+predictions = lr_model.transform(test_data)
 
+# Évaluer les performances du modèle
+evaluator = MulticlassClassificationEvaluator(
+    labelCol="SeasonIndex", predictionCol="prediction", metricName="accuracy"
+)
+accuracy = evaluator.evaluate(predictions)
 
-# Sauvegarde du graphique
-plt.savefig("temperature_clustering_tunisia.png")
-print("Graphique sauvegardé sous le nom 'temperature_clustering_tunisia.png'.")
+print(f"Précision du modèle : {accuracy:.2f}")
 
-# Compter le nombre de valeurs dans chaque cluster
-cluster_counts = df_tunisia_temp.groupBy('Cluster').count().collect()
-
-# Afficher le nombre de valeurs par cluster
-print("Nombre de valeurs par cluster :")
-for row in cluster_counts:
-    print(f"Cluster {row['Cluster']}: {row['count']} occurrences")
+# Afficher un exemple de prédictions
+predictions.select("AverageTemperature", "Season", "prediction").show()
 
 # Arrêter la session Spark
 spark.stop()
