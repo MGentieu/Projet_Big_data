@@ -111,8 +111,8 @@ plt.legend(fontsize=12)
 plt.tight_layout()
 
 # Évaluation sur l'ensemble de test
-print("\n--- Évaluation sur l'ensemble de test ---")
-evaluate_regression_model(model, X_test, y_test)
+print("\n--- Évaluation sur l'ensemble complet ---")
+evaluate_regression_model(model, X, y)
 
 # Sauvegarde du graphique
 plt.savefig("temperature_evolution_regression.png")
