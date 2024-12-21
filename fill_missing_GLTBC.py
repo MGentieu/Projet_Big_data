@@ -13,11 +13,10 @@ def rename_hdfs_file(hdfs_path):
     subprocess.run([
         "hdfs", "dfs", "-mv",
         f"{hdfs_path}/part-00000-*",  # Part-00000 avec identifiant aléatoire
-        f"{hdfs_path}/../final_output.csv"  # Nouveau nom de fichier
+        f"{hdfs_path}/../GLTBC.csv"  # Nouveau nom de fichier
     ], check=True)
-    subprocess.run(["hdfs", "dfs", "-rmdir", "projet/GLTBC.csv"])
-    print(f"Le fichier a été renommé en 'GLTBC_final.csv' dans le répertoire HDFS : {hdfs_path}")
-
+    subprocess.run(["hdfs", "dfs", "-rmdir", "projet/GLTBC_doc.csv"], check=True)
+    print(f"Le fichier a été renommé en 'final_output.csv' dans le répertoire HDFS : {hdfs_path}")
 
 def process_partition(rows):
 	# On utilise une copie de référence des lignes pour ne pas affecter les calculs suivants
@@ -64,7 +63,7 @@ def process_partition(rows):
 	"""
 	return rows
 
-def fill_missing_values(file_path, output_path, local_output_file):
+def fill_missing_values(file_path, output_path):
         # Initialiser une session Spark
 	spark = SparkSession.builder \
 	.appName("Handle Missing Values") \
@@ -107,9 +106,8 @@ if __name__ == "__main__":
 	#input_csv_path = sys.argv[1]
 	#output_csv_path = sys.argv[2]
 	input_csv_path = "hdfs:///user/root/projet/GlobalLandTemperaturesByCountry.csv"
-	output_csv_path = "hdfs:///user/root/projet/GLTBC.csv"
-	local_csv_output_file = "hdfs:///user/root/projet/test_final.csv"
+	output_csv_path = "hdfs:///user/root/projet/GLTBC_doc.csv"
 	# Appeler la fonction pour traiter le fichier
-	fill_missing_values(input_csv_path, output_csv_path, local_csv_output_file)
+	fill_missing_values(input_csv_path, output_csv_path)
 
 
