@@ -24,7 +24,7 @@ df = df.select("dt", "LandAverageTemperature")
 
 # Étape 4 : Conversion des données Spark en Pandas
 df_pd = df.toPandas()
-
+²
 # Convertir la colonne 'dt' en format datetime pour une meilleure gestion des dates dans Pandas
 df_pd['dt'] = pd.to_datetime(df_pd['dt'])
 
@@ -33,7 +33,7 @@ df_pd = df_pd.sort_values(by="dt")
 
 # Étape 5 : Visualisation avec Matplotlib
 plt.figure(figsize=(12, 6))
-plt.plot(df_pd['dt'], df_pd['LandAverageTemperature'], color='blue', label='Température moyenne')
+plt.scatter(df_pd['dt'], df_pd['LandAverageTemperature'], color='blue', label='Température moyenne', s=10)
 
 # Ajout des détails au graphique
 plt.title("Évolution de la température au fil du temps", fontsize=16)
