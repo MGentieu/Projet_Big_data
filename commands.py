@@ -22,3 +22,5 @@ execute_command("spark-submit --deploy-mode client --master local[2] fill_missin
 execute_command("spark-submit --deploy-mode client --master local[2] TransfoDate.py")
 
 execute_command("spark-submit --deploy-mode client --master local[2] creation_datasets_exploitables.py")
+
+execute_command("spark-submit --deploy-mode client --master local[2] genere_graphiques.py hdfs:///user/root/projet/AvgTempByCo.csv")
