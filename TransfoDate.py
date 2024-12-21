@@ -71,22 +71,22 @@ def process_csv_files(csv_files, output_dir):
 if __name__ == "__main__":
     # Liste des fichiers CSV à traiter
     csv_files = [
-        "hdfs:///user/root/projet/GLTBC.csv",
-        "hdfs:///user/root/projet/GLTBMC.csv",
+        "hdfs:///user/root/projet/GlobalLandTemperaturesByCountry.csv",
+        "hdfs:///user/root/projet/GlobalLandTemperaturesByMajorCity.csv",
         "hdfs:///user/root/projet/GlobalTemperatures.csv",
         "hdfs:///user/root/projet/GlobalLandTemperaturesByState.csv",
         "hdfs:///user/root/projet/GlobalLandTemperaturesByCity.csv"
     ]
     new_paths = [
-        "hdfs:///user/root/PBD/GlobalLandTemperaturesByCountry.csv",
-        "hdfs:///user/root/PBD/GlobalLandTemperaturesByMajorCity.csv",
-        "hdfs:///user/root/PBD/GlobalTemperatures.csv",
-        "hdfs:///user/root/PBD/GlobalLandTemperaturesByState.csv",
-        "hdfs:///user/root/PBD/GlobalLandTemperaturesByCity.csv"
+        "hdfs:///user/root/projet/GlobalLTBC.csv",
+        "hdfs:///user/root/projet/GlobalLTBMC.csv",
+        "hdfs:///user/root/projet/GlobalT.csv",
+        "hdfs:///user/root/projet/GlobalLTBS.csv",
+        "hdfs:///user/root/projet/GlovalLTBCi.csv"
     ]
     titles=["GLTBCo","GLTBMC","GL","GLTBS","GLTBCi"]
 
-    output_dir = "hdfs:///user/root/PBD"
+    output_dir = "hdfs:///user/root/projet"
 
     # Répertoire de sortie pour les fichiers traités
 
