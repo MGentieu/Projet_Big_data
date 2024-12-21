@@ -16,8 +16,8 @@ def execute_command(command):
 
 # Exemple d'utilisation
 execute_command("spark-submit --deploy-mode client --master local[2] fill_missing_GLTBC.py")  # Remplacez par la commande que vous voulez exécuter
-
 execute_command("spark-submit --deploy-mode client --master local[2] fill_missing_GLTBMC.py")
+execute_command("spark-submit --deploy-mode client --master local[2] fill_missing_GT.py")
 
 execute_command("spark-submit --deploy-mode client --master local[2] TransfoDate.py")
 
