@@ -24,7 +24,7 @@ df = df.select("dt", "LandAverageTemperature")
 
 # Étape 4 : Conversion des données Spark en Pandas
 df_pd = df.toPandas()
-²
+
 # Convertir la colonne 'dt' en format datetime pour une meilleure gestion des dates dans Pandas
 df_pd['dt'] = pd.to_datetime(df_pd['dt'])
 
