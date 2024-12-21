@@ -13,9 +13,10 @@ def rename_hdfs_file(hdfs_path):
     subprocess.run([
         "hdfs", "dfs", "-mv",
         f"{hdfs_path}/part-00000-*",  # Part-00000 avec identifiant aléatoire
-        f"{hdfs_path}/final_output.csv"  # Nouveau nom de fichier
+        f"{hdfs_path}/../final_output.csv"  # Nouveau nom de fichier
     ], check=True)
-    print(f"Le fichier a été renommé en 'final_output.csv' dans le répertoire HDFS : {hdfs_path}")
+    subprocess.run(["hdfs", "dfs", "-rmdir", "projet/GLTBC.csv"])
+    print(f"Le fichier a été renommé en 'GLTBC_final.csv' dans le répertoire HDFS : {hdfs_path}")
 
 
 def process_partition(rows):
