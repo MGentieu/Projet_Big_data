@@ -8,7 +8,7 @@ import subprocess
 
 
 def rename_hdfs_file(hdfs_path):
-    # Fusionner si nécessaire
+
     subprocess.run(["hdfs", "dfs", "-rm", f"{hdfs_path}/_SUCCESS"], check=True)  # Supprime _SUCCESS
     subprocess.run([
         "hdfs", "dfs", "-mv",
@@ -87,23 +87,13 @@ def fill_missing_values(file_path, output_path, local_output_file):
 	print("Exemple de lignes dans le RDD traité :")
 	print(filled_rdd.take(5))
 
-	# Convertir l'RDD corrigé en DataFrame
-	#filled_df = spark.createDataFrame(filled_rdd, schema=df.schema)
-	#filled_df = filled_rdd.map(lambda x:Row(dt=x[0],AverageTemperature=x[1],AverageTemperatureUncertainty=x[2],Country=x[3]).toDF()
 	filled_df = spark.createDataFrame(filled_rdd, schema=["dt", "AverageTemperature", "AverageTemperatureUncertainty", "Country"])
 	filled_df.show(15)
-	# Sauvegarder le DataFrame traité
-	#filled_df.write.csv(output_path, header=True)
-	#filled_df.write.option("header", True).mode("overwrite").csv(output_path)
+
 	# Regrouper les partitions en une seule
 	filled_df.coalesce(1).write.option("header", True).mode("overwrite").csv(output_path)
 
 	time.sleep(1)
-	# Fusionner les fichiers CSV avec la commande Hadoop directement dans le code
-	#print("Fusion des fichiers en un fichier unique local...")
-	#hdfs_merge_command = ["hdfs", "dfs", "-getmerge", output_path, local_output_file]
-	#subprocess.run(hdfs_merge_command, check=True)
-	#print(f"Le fichier fusionné a été sauvegardé localement sous : {local_output_file}")
 	
 	rename_hdfs_file(output_path)
 
@@ -116,7 +106,7 @@ if __name__ == "__main__":
 	#input_csv_path = sys.argv[1]
 	#output_csv_path = sys.argv[2]
 	input_csv_path = "hdfs:///user/root/projet/GlobalLandTemperaturesByCountry.csv"
-	output_csv_path = "hdfs:///user/root/projet/test.csv"
+	output_csv_path = "hdfs:///user/root/projet/GLTBC.csv"
 	local_csv_output_file = "hdfs:///user/root/projet/test_final.csv"
 	# Appeler la fonction pour traiter le fichier
 	fill_missing_values(input_csv_path, output_csv_path, local_csv_output_file)
