@@ -1,6 +1,6 @@
 import os
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, split, to_date
+from pyspark.sql.functions import col, split
 from pyspark.sql.types import IntegerType
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression

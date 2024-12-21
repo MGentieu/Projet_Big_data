@@ -1,6 +1,7 @@
 import os
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, split, to_date
+from pyspark.sql.types import IntegerType
 from pyspark.ml.feature import StandardScaler
 from pyspark.ml.clustering import KMeans
 import matplotlib.pyplot as plt
