@@ -4,16 +4,22 @@ from pyspark.sql.functions import col, split
 from pyspark.sql.types import IntegerType
 import subprocess
 
-
 def rename_hdfs_file(hdfs_path, title):
+    try:
+        subprocess.run(["hdfs", "dfs", "-rm", f"{hdfs_path}/_SUCCESS"], check=True)
+        file_to_rename = subprocess.check_output(
+            ["hdfs", "dfs", "-ls", hdfs_path], universal_newlines=True
+        ).split("\n")
 
-    subprocess.run(["hdfs", "dfs", "-rm", f"{hdfs_path}/_SUCCESS"], check=True)  # Supprime _SUCCESS
-    subprocess.run([
-        "hdfs", "dfs", "-mv",
-        f"{hdfs_path}/part-00000-*",  # Part-00000 avec identifiant aléatoire
-        f"{hdfs_path}/../{title}.csv"  # Nouveau nom de fichier
-    ], check=True)
-    print(f"Le fichier a été renommé en 'GLTBC_final.csv' dans le répertoire HDFS : {hdfs_path}")
+        # Identifier le fichier généré
+        for line in file_to_rename:
+            if "part-00000" in line:
+                file_path = line.split()[-1]
+                subprocess.run(["hdfs", "dfs", "-mv", file_path, f"{hdfs_path}/../{title}.csv"], check=True)
+                print(f"Fichier renommé : {file_path} -> {title}.csv")
+                break
+    except Exception as e:
+        print(f"Erreur dans le renommage : {e}")
 
 
 def process_csv_files(csv_files, output_dir):
@@ -41,7 +47,7 @@ def process_csv_files(csv_files, output_dir):
             df = df.drop("dt")
 
             # Générer un nom de fichier de sortie basé sur le fichier d'entrée
-            file_name = os.path.basename(file_path).replace(".csv", "_processed.csv")
+            file_name = os.path.basename(file_path).replace(".csv", ".csv")
             output_path = os.path.join(output_dir, file_name)
 
             # Sauvegarder le DataFrame modifié directement dans le dossier output_dir
@@ -72,8 +78,9 @@ if __name__ == "__main__":
     ]
     titles=["GLTBCo","GLTBMC","GL","GLTBS","GLTBCi"]
 
+    output_dir = "hdfs:///user/root/PBD"
+
     # Répertoire de sortie pour les fichiers traités
-    output_dir = "/user/root/PBD"
 
     # Traiter les fichiers CSV
     process_csv_files(csv_files, output_dir)
