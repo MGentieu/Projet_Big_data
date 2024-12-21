@@ -1,7 +1,7 @@
 import os
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, to_date
-from pyspark.ml.feature import StandardScaler
+from pyspark.ml.feature import StandardScaler, VectorAssembler
 from pyspark.ml.clustering import KMeans
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -12,7 +12,7 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 # Charger le dataset depuis HDFS (ou stockage local compatible avec Hadoop)
-df = spark.read.csv("hdfs:///user/root/projet/GlobalTemperatures.csv", header=True, inferSchema=True)
+df = spark.read.csv("hdfs:///user/root/projet/GlobalLandTemperaturesByCity.csv", header=True, inferSchema=True)
 
 # Filtrer les données pour la Tunisie
 df_tunisia = df.filter(df['Country'] == 'Tunisia')
@@ -23,8 +23,12 @@ df_tunisia = df_tunisia.withColumn('dt', to_date(col('dt'), 'yyyy-MM-dd'))
 # Sélectionner les colonnes nécessaires : 'dt' et 'AverageTemperature'
 df_tunisia_temp = df_tunisia.select('dt', 'AverageTemperature').dropna()
 
-# Normalisation des températures
-scaler = StandardScaler(inputCol="AverageTemperature", outputCol="scaledTemp")
+# Utilisation de VectorAssembler pour transformer 'AverageTemperature' en un vecteur
+assembler = VectorAssembler(inputCols=["AverageTemperature"], outputCol="features")
+df_tunisia_temp = assembler.transform(df_tunisia_temp)
+
+# Normalisation des températures avec StandardScaler
+scaler = StandardScaler(inputCol="features", outputCol="scaledTemp")
 df_tunisia_temp = scaler.fit(df_tunisia_temp).transform(df_tunisia_temp)
 
 # Appliquer KMeans avec 3 clusters
