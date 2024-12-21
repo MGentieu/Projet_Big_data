@@ -6,6 +6,7 @@ import subprocess
 
 def rename_hdfs_file(hdfs_path, title):
     try:
+        subprocess.run(["hdfs", "dfs", "-test", "-e", f"{hdfs_path}/_SUCCESS"], check=True)
         subprocess.run(["hdfs", "dfs", "-rm", f"{hdfs_path}/_SUCCESS"], check=True)
         file_to_rename = subprocess.check_output(
             ["hdfs", "dfs", "-ls", hdfs_path], universal_newlines=True
@@ -76,6 +77,13 @@ if __name__ == "__main__":
         "hdfs:///user/root/projet/GlobalLandTemperaturesByState.csv",
         "hdfs:///user/root/projet/GlobalLandTemperaturesByCity.csv"
     ]
+    new_paths = [
+        "hdfs:///user/root/PBD/GlobalLandTemperaturesByCountry.csv",
+        "hdfs:///user/root/PBD/GlobalLandTemperaturesByMajorCity.csv",
+        "hdfs:///user/root/PBD/GlobalTemperatures.csv",
+        "hdfs:///user/root/PBD/GlobalLandTemperaturesByState.csv",
+        "hdfs:///user/root/PBD/GlobalLandTemperaturesByCity.csv"
+    ]
     titles=["GLTBCo","GLTBMC","GL","GLTBS","GLTBCi"]
 
     output_dir = "hdfs:///user/root/PBD"
@@ -85,6 +93,6 @@ if __name__ == "__main__":
     # Traiter les fichiers CSV
     process_csv_files(csv_files, output_dir)
 
-    for i in range (len(csv_files)):
-        rename_hdfs_file(csv_files[i], titles[i])
+    for i in range (len(new_paths)):
+        rename_hdfs_file(new_paths[i], titles[i])
     subprocess.run(["hdfs", "dfs", "-rmdir", f"{output_dir}/Global*"], check=True)
