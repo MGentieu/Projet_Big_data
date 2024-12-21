@@ -37,7 +37,7 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 
-df = spark.read.csv("hdfs:///user/root/projet/GlobalTemperaturesByCountry.csv", header=True, inferSchema=True)
+df = spark.read.csv("hdfs:///user/root/projet/GlobalLandTemperaturesByCountry.csv", header=True, inferSchema=True)
 
 # Filtrer les données pour la Tunisie
 df_tunisia = df.filter(df['Country'] == 'Tunisia')
