@@ -9,8 +9,8 @@ spark = SparkSession.builder \
     .appName("TemperatureSeasonPrediction") \
     .getOrCreate()
 
-# Charger le dataset depuis un fichier local ou HDFS
-df = spark.read.csv("hdfs:///user/root/projet/GlobalLandTemperaturesByCity.csv", header=True, inferSchema=True)
+# Charger le dataset GlobalLandTemperaturesByCountry depuis un fichier local ou HDFS
+df = spark.read.csv("hdfs:///user/root/projet/GlobalLandTemperaturesByCountry.csv", header=True, inferSchema=True)
 
 # Filtrer les données pour la Tunisie
 df_tunisia = df.filter(df['Country'] == 'Tunisia')
@@ -21,13 +21,12 @@ df_tunisia = df_tunisia.withColumn('dt', to_date(col('dt'), 'yyyy-MM-dd'))
 # Ajouter une colonne 'Month' pour extraire le mois à partir de la date
 df_tunisia = df_tunisia.withColumn('Month', month(col('dt')))
 
-# Créer une colonne catégorielle "Season" en fonction du mois
+# Créer une colonne catégorielle "Season" avec 3 catégories : "Winter", "Summer", "Transition"
 df_tunisia = df_tunisia.withColumn(
     'Season',
     when((col('Month') == 12) | (col('Month') <= 2), 'Winter')
-    .when((col('Month') >= 3) & (col('Month') <= 5), 'Spring')
     .when((col('Month') >= 6) & (col('Month') <= 8), 'Summer')
-    .otherwise('Autumn')
+    .otherwise('Transition')  # Fusion de Spring et Autumn
 )
 
 # Garder les colonnes nécessaires et supprimer les lignes avec des valeurs nulles
