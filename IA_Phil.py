@@ -8,7 +8,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-
 # Étape 1 : Initialisation de la session Spark
 spark = SparkSession.builder \
     .appName("TemperatureEvolution") \
@@ -21,11 +20,9 @@ df = spark.read.csv("hdfs:///user/root/projet/GlobalTemperatures.csv", header=Tr
 df.show()
 
 # Étape 3 : Sélection des colonnes pertinentes
-# Assurez-vous que vos colonnes de date et de température s'appellent par exemple 'dt' et 'LandAverageTemperature'.
 df = df.select("dt", "LandAverageTemperature")
 
 # Étape 4 : Conversion des données Spark en Pandas
-# PySpark est utilisé pour les gros volumes, mais Matplotlib travaille mieux avec Pandas.
 df_pd = df.toPandas()
 
 # Convertir la colonne 'dt' en format datetime pour une meilleure gestion des dates dans Pandas
@@ -46,11 +43,13 @@ plt.grid(True, linestyle='--', alpha=0.6)
 plt.legend(fontsize=12)
 plt.tight_layout()
 
-# Affichage du graphique
-plt.show()
+# Sauvegarder le graphique en tant qu'image PNG
+plt.savefig("temperature_evolution.png")
+print("Graphique sauvegardé sous le nom 'temperature_evolution.png'.")
 
-# Arrêtez la session Spark
+# Arrêt de la session Spark
 spark.stop()
+
 
 
 
