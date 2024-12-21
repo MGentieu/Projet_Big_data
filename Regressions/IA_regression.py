@@ -1,15 +1,13 @@
-import os
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, split
-from pyspark.sql.types import IntegerType
+from pyspark.sql.functions import col, split, when, sum as spark_sum
+from pyspark.sql.types import IntegerType, DoubleType
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
-import numpy as np
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
+import numpy as np
 
 
-# Fonction pour traiter la colonne 'dt'
 def process_date_column(df):
     """
     Traite la colonne 'dt' d'un DataFrame Spark, la divise en trois colonnes : 'year', 'month', 'day'.
@@ -34,6 +32,7 @@ def process_date_column(df):
 
     return df
 
+
 def evaluate_regression_model(model, X_test, y_test):
     """
     Évalue et affiche la performance d'un modèle de régression linéaire.
@@ -43,18 +42,6 @@ def evaluate_regression_model(model, X_test, y_test):
     - X_test : Données de test (indépendantes).
     - y_test : Valeurs réelles correspondantes (cibles).
     """
-    # Étape 6 : Visualisation avec Matplotlib (Tendance sur tout l'ensemble de données)
-    plt.figure(figsize=(12, 6))
-    plt.plot(df_pd['year'], df_pd['YearlyAverageTemperature'], color='blue', label='Température moyenne annuelle')
-    plt.plot(df_pd['year'], model.predict(X), color='red', label='Tendance (Régression Linéaire)', linestyle='--')
-
-    plt.title("Évolution de la température moyenne annuelle avec tendance", fontsize=16)
-    plt.xlabel("Année", fontsize=12)
-    plt.ylabel("Température moyenne (°C)", fontsize=12)
-    plt.grid(True, linestyle='--', alpha=0.6)
-    plt.legend(fontsize=12)
-    plt.tight_layout()
-
     # Prédictions sur le jeu de test
     y_pred = model.predict(X_test)
 
@@ -75,47 +62,73 @@ def evaluate_regression_model(model, X_test, y_test):
     print(f"Pourcentage d'erreur moyenne relative : {mean_relative_error:.2f} %")
 
 
+# Initialisation de Spark
 spark = SparkSession.builder \
     .appName("TemperatureEvolution") \
     .getOrCreate()
 
+# Chargement des données
 df = spark.read.csv("hdfs:///user/root/projet/GlobalTemperatures.csv", header=True, inferSchema=True)
-df.show()
+df = df.select("dt", "LandAverageTemperature", "LandAverageTemperatureUncertainty")
 
-df = df.select("dt", "LandAverageTemperature")
-
-# Étape 4 : Traitement de la colonne 'dt' pour extraire l'année, le mois et le jour
+# Traitement de la colonne 'dt' pour extraire l'année, le mois et le jour
 df = process_date_column(df)
 
-# Étape 5 : Calcul de la température moyenne par année
-df_yearly_avg = df.groupBy("year").avg("LandAverageTemperature").withColumnRenamed("avg(LandAverageTemperature)",
-                                                                                   "YearlyAverageTemperature")
+# Ajouter une colonne de poids
+df = df.withColumn(
+    "Weight",
+    when(col("LandAverageTemperatureUncertainty").isNotNull(), 1 / col("LandAverageTemperatureUncertainty"))
+    .otherwise(0.0)
+)
 
-# Conversion en Pandas pour la visualisation et la régression linéaire
+# Calcul de la température moyenne annuelle pondérée
+df_yearly_avg = (
+    df.groupBy("year")
+    .agg(
+        spark_sum(col("LandAverageTemperature") * col("Weight")).alias("WeightedTemperatureSum"),
+        spark_sum("Weight").alias("WeightSum")
+    )
+    .withColumn(
+        "YearlyAverageTemperatureWeighted",
+        col("WeightedTemperatureSum") / col("WeightSum")
+    )
+    .select("year", "YearlyAverageTemperatureWeighted")
+)
+
+# Conversion en Pandas pour la régression linéaire
 df_pd = df_yearly_avg.toPandas()
 df_pd = df_pd.sort_values(by="year")
 
 # Préparation des données pour la régression linéaire
-X = df_pd['year'].values.reshape(-1, 1)  # Année (variable indépendante)
-y = df_pd['YearlyAverageTemperature'].values  # Température moyenne annuelle (variable dépendante)
+X = df_pd["year"].values.reshape(-1, 1)  # Année (variable indépendante)
+y = df_pd["YearlyAverageTemperatureWeighted"].values  # Température moyenne annuelle pondérée (variable dépendante)
 
 # Division des données en ensembles d'entraînement (70%) et de test (30%)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-
-
 # Création et entraînement du modèle de régression linéaire
 model = LinearRegression()
 model.fit(X_train, y_train)
-# Génération des prédictions pour l'ensemble d'entraînement et de test
-y_pred_train = model.predict(X_train)
-y_pred_test = model.predict(X_test)
 
+# Évaluation et visualisation du modèle
+evaluate_regression_model(model, X_test, y_test)
 
-evaluate_regression_model(model, X, y)
+# Visualisation avec Matplotlib
+plt.figure(figsize=(12, 6))
+plt.plot(df_pd["year"], df_pd["YearlyAverageTemperatureWeighted"], color="blue", label="Température moyenne annuelle pondérée")
+plt.plot(df_pd["year"], model.predict(X), color="red", linestyle="--", label="Tendance (Régression Linéaire)")
+
+plt.title("Évolution de la température moyenne annuelle pondérée avec tendance", fontsize=16)
+plt.xlabel("Année", fontsize=12)
+plt.ylabel("Température moyenne (°C)", fontsize=12)
+plt.grid(True, linestyle="--", alpha=0.6)
+plt.legend(fontsize=12)
+plt.tight_layout()
 
 # Sauvegarde du graphique
-plt.savefig("temperature_evolution_regression.png")
-print("Graphique sauvegardé sous le nom 'temperature_evolution_regression.png'.")
+plt.savefig("temperature_evolution_regression_weighted.png")
+plt.show()
+print("Graphique sauvegardé sous le nom 'temperature_evolution_regression_weighted.png'.")
 
+# Arrêt de Spark
 spark.stop()
