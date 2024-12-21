@@ -17,8 +17,6 @@ df = spark.read.csv("hdfs:///user/root/projet/GlobalLandTemperaturesByCity.csv",
 # Filtrer les données pour la Tunisie
 df_tunisia = df.filter(df['Country'] == 'Tunisia')
 
-df_tunisia.show(25)
-"""
 # Convertir la colonne 'dt' en type date sans séparer les colonnes
 df_tunisia = df_tunisia.withColumn('dt', to_date(col('dt'), 'yyyy-MM-dd'))
 
@@ -62,6 +60,6 @@ cluster_counts = df_tunisia_temp.groupBy('Cluster').count().collect()
 print("Nombre de valeurs par cluster :")
 for row in cluster_counts:
     print(f"Cluster {row['Cluster']}: {row['count']} occurrences")
-"""
+
 # Arrêter la session Spark
 spark.stop()
