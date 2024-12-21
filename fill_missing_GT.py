@@ -1,14 +1,11 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
-from pyspark.sql.types import DoubleType
-from pyspark.sql import Row
+from pyspark.sql.types import DoubleType, StructType, StructField, StringType
 import sys
 import time
 import subprocess
 
-
 def rename_hdfs_file(hdfs_path):
-
     subprocess.run(["hdfs", "dfs", "-rm", f"{hdfs_path}/_SUCCESS"], check=True)  # Supprime _SUCCESS
     subprocess.run([
         "hdfs", "dfs", "-mv",
@@ -18,101 +15,127 @@ def rename_hdfs_file(hdfs_path):
     subprocess.run(["hdfs", "dfs", "-rmdir", "projet/GT_doc.csv"], check=True)
     print(f"Le fichier a été renommé en 'final_output.csv' dans le répertoire HDFS : {hdfs_path}")
 
-
 def process_partition(rows):
-        # Convertir les lignes en une liste modifiable
-        rows = list(rows)
-        initial_rows = rows.copy()
+    rows = list(rows)  # Convertir les lignes en une liste modifiable
+    initial_rows = rows.copy()
 
-        for i in range(len(rows)):
-            if rows[i][1] is None or rows[i][2] is None:  # Vérifie les valeurs manquantes
-                # Récupérer les précédentes et suivantes valeurs valides dans la copie initiale
-                prev_temp, prev_uncert = None, None
-                next_temp, next_uncert = None, None
+    for i in range(len(rows)):
+        if rows[i][1] is None or rows[i][2] is None:  # Vérifie les valeurs manquantes
+            prev_lavg_temp, next_lavg_temp = None, None
+            prev_max_temp, next_max_temp = None, None
+            prev_min_temp, next_min_temp = None, None
+            prev_lo_avg_temp, next_lo_avg_temp = None, None
 
-                # Rechercher les valeurs précédentes valides
-                for j in range(i - 1, -1, -1):
-                    if initial_rows[j][1] is not None and initial_rows[j][2] is not None:
-                        prev_temp, prev_uncert = initial_rows[j][1], initial_rows[j][2]
-                        break
+            # Rechercher les valeurs précédentes valides
+            for j in range(i - 1, -1, -1):
+                check, verif1, verif2, verif3, verif4 = 0, False, False, False, False
+                if initial_rows[j][1] is not None and not verif1:
+                    prev_lavg_temp = initial_rows[j][1]
+                    check += 1
+                    verif1 = True
+                if initial_rows[j][3] is not None and not verif2:
+                    prev_max_temp = initial_rows[j][3]
+                    check += 1
+                    verif2 = True
+                if initial_rows[j][5] is not None and not verif3:
+                    prev_min_temp = initial_rows[j][5]
+                    check += 1
+                    verif3 = True
+                if initial_rows[j][7] is not None and not verif4:
+                    prev_lo_avg_temp = initial_rows[j][7]
+                    check += 1
+                    verif4 = True
+                if check >= 4:
+                    break
 
-                # Rechercher les valeurs suivantes valides
-                for j in range(i + 1, len(rows)):
-                    if initial_rows[j][1] is not None and initial_rows[j][2] is not None:
-                        next_temp, next_uncert = initial_rows[j][1], initial_rows[j][2]
-                        break
+            # Rechercher les valeurs suivantes valides
+            for j in range(i + 1, len(rows)):
+                check, verif1, verif2, verif3, verif4 = 0, False, False, False, False
+                if initial_rows[j][1] is not None and not verif1:
+                    next_lavg_temp = initial_rows[j][1]
+                    check += 1
+                    verif1 = True
+                if initial_rows[j][3] is not None and not verif2:
+                    next_max_temp = initial_rows[j][3]
+                    check += 1
+                    verif2 = True
+                if initial_rows[j][5] is not None and not verif3:
+                    next_min_temp = initial_rows[j][5]
+                    check += 1
+                    verif3 = True
+                if initial_rows[j][7] is not None and not verif4:
+                    next_lo_avg_temp = initial_rows[j][7]
+                    check += 1
+                    verif4 = True
+                if check >= 4:
+                    break
 
-                # Calculer les moyennes uniquement si les deux valeurs sont valides
-                avg_temp = prev_temp if next_temp is None else (
-                    next_temp if prev_temp is None else (prev_temp + next_temp) / 2
-                )
-                avg_uncert = prev_uncert if next_uncert is None else (
-                    next_uncert if prev_uncert is None else (prev_uncert + next_uncert) / 2
-                )
+            # Calculer les moyennes uniquement si les deux valeurs sont valides
+            avg_lavg_temp = prev_lavg_temp if next_lavg_temp is None else (
+                next_lavg_temp if prev_lavg_temp is None else (prev_lavg_temp + next_lavg_temp) / 2
+            )
+            avg_max_temp = prev_max_temp if next_max_temp is None else (
+                next_max_temp if prev_max_temp is None else (prev_max_temp + next_max_temp) / 2
+            )
+            avg_min_temp = prev_min_temp if next_min_temp is None else (
+                next_min_temp if prev_min_temp is None else (prev_min_temp + next_min_temp) / 2
+            )
+            avg_lo_avg_temp = prev_lo_avg_temp if next_lo_avg_temp is None else (
+                next_lo_avg_temp if prev_lo_avg_temp is None else (prev_lo_avg_temp + next_lo_avg_temp) / 2
+            )
 
-                # Remplir les valeurs manquantes avec ces moyennes
-                rows[i] = (
-                    rows[i][0],  # dt
-                    avg_temp,    # AverageTemperature
-                    avg_uncert,  # AverageTemperatureUncertainty
-                    rows[i][3],  # City
-                    rows[i][4],  # Country
-                    rows[i][5],  # Latitude
-                    rows[i][6]   # Longitude
-                )
+            rows[i] = (
+                rows[i][0],  # dt
+                float(avg_lavg_temp) if avg_lavg_temp is not None else None,
+                rows[i][2],
+                float(avg_max_temp) if avg_max_temp is not None else None,
+                rows[i][4],
+                float(avg_min_temp) if avg_min_temp is not None else None,
+                rows[i][6],
+                float(avg_lo_avg_temp) if avg_lo_avg_temp is not None else None,
+                rows[i][8]
+            )
 
-        return rows
+    return rows
 
 def fill_missing_values(file_path, output_path):
-        # Initialiser une session Spark
-	spark = SparkSession.builder \
-	.appName("Handle Missing Values") \
-	.getOrCreate()
+    spark = SparkSession.builder \
+        .appName("Handle Missing Values") \
+        .getOrCreate()
 
-	# Charger le fichier CSV dans un DataFrame Spark
-	df = spark.read.csv(file_path, header=True, inferSchema=True)
+    df = spark.read.csv(file_path, header=True, inferSchema=True)
 
-	# Conversion des colonnes AverageTemperature et AverageTemperatureUncertainty en Double
-	df = df.withColumn("AverageTemperature", col("AverageTemperature").cast(DoubleType()))
-	df = df.withColumn("AverageTemperatureUncertainty", col("AverageTemperatureUncertainty").cast(DoubleType()))
+    df = df.withColumn("LandAverageTemperature", col("LandAverageTemperature").cast(DoubleType()))
+    df = df.withColumn("LandMaxTemperature", col("LandMaxTemperature").cast(DoubleType()))
+    df = df.withColumn("LandMinTemperature", col("LandMinTemperature").cast(DoubleType()))
+    df = df.withColumn("LandAndOceanAverageTemperature", col("LandAndOceanAverageTemperature").cast(DoubleType()))
 
-	# Convertir le DataFrame en RDD pour un traitement partitionné
-	original_rdd = df.rdd
+    original_rdd = df.rdd
 
-	# Algorithme pour combler les valeurs manquantes
+    filled_rdd = original_rdd.mapPartitions(lambda partition: process_partition(partition))
 
+    schema = StructType([
+        StructField("dt", StringType(), True),
+        StructField("LandAverageTemperature", DoubleType(), True),
+        StructField("LandAverageTemperatureUncertainty", DoubleType(), True),
+        StructField("LandMaxTemperature", DoubleType(), True),
+        StructField("LandMaxTemperatureUncertainty", DoubleType(), True),
+        StructField("LandMinTemperature", DoubleType(), True),
+        StructField("LandMinTemperatureUncertainty", DoubleType(), True),
+        StructField("LandAndOceanAverageTemperature", DoubleType(), True),
+        StructField("LandAndOceanAverageTemperatureUncertainty", DoubleType(), True),
+    ])
 
-	# Appliquer le traitement partition par partition
-	filled_rdd = original_rdd.mapPartitions(lambda partition: process_partition(partition))
-	print("Exemple de lignes dans le RDD traité :")
-	print(filled_rdd.take(5))
+    filled_df = spark.createDataFrame(filled_rdd, schema=schema)
 
-	# Convertir l'RDD corrigé en DataFrame
-	#filled_df = spark.createDataFrame(filled_rdd, schema=df.schema)
-	#filled_df = filled_rdd.map(lambda x:Row(dt=x[0],AverageTemperature=x[1],AverageTemperatureUncertainty=x[2],Country=x[3]).toDF()
-	filled_df = spark.createDataFrame(filled_rdd, schema=["dt", "AverageTemperature", "AverageTemperatureUncertainty",
-	"City", "Country", "Latitude","Longitude"])
-	filled_df.show(15)
+    filled_df.coalesce(1).write.option("header", True).mode("overwrite").csv(output_path)
 
-	# Regrouper les partitions en une seule
-	filled_df.coalesce(1).write.option("header", True).mode("overwrite").csv(output_path)
-
-	time.sleep(1)
-	
-	rename_hdfs_file(output_path)
-
+    time.sleep(1)
+    rename_hdfs_file(output_path)
 
 if __name__ == "__main__":
-	#if len(sys.argv) != 3:
-	#	print("Usage: python handle_missing_values.py <input_csv_path> <output_csv_path>")
-	#	sys.exit(1)
+    input_csv_path = "hdfs:///user/root/projet/GlobalTemperatures.csv"
+    output_csv_path = "hdfs:///user/root/projet/GT_doc.csv"
 
-	#input_csv_path = sys.argv[1]
-	#output_csv_path = sys.argv[2]
-	input_csv_path = "hdfs:///user/root/projet/GlobalLandTemperaturesByMajorCity.csv"
-	output_csv_path = "hdfs:///user/root/projet/GLTBMC_doc.csv"
-
-	# Appeler la fonction pour traiter le fichier
-	fill_missing_values(input_csv_path, output_csv_path)
-
+    fill_missing_values(input_csv_path, output_csv_path)
 
