@@ -118,7 +118,7 @@ evaluate_regression_model(model, X_test, y_test)
 
 # Visualisation avec Matplotlib
 plt.figure(figsize=(12, 6))
-plt.plot(df_pd["year"], df_pd["YearlyAverageTemperatureWeighted"], color="blue", label="Température moyenne annuelle pondérée")
+plt.plot(df_pd["year"], df_pd["YearlyAverageTemperature"], color="blue", label="Température moyenne annuelle pondérée")
 plt.plot(df_pd["year"], model.predict(X), color="red", linestyle="--", label="Tendance (Régression Linéaire)")
 
 plt.title("Évolution de la température moyenne annuelle pondérée avec tendance", fontsize=16)
