@@ -83,10 +83,11 @@ df.show()
 
 df = df.select("dt", "LandAverageTemperature")
 
-df = df.filter(col("dt").cast(IntegerType()) >= 1850)
-
 # Étape 4 : Traitement de la colonne 'dt' pour extraire l'année, le mois et le jour
 df = process_date_column(df)
+
+# Filtrer les données avant 1850
+df = df.filter(col("year") >= 1850)
 
 # Étape 5 : Calcul de la température moyenne par année
 df_yearly_avg = df.groupBy("year").avg("LandAverageTemperature").withColumnRenamed("avg(LandAverageTemperature)",
@@ -103,15 +104,12 @@ y = df_pd['YearlyAverageTemperature'].values  # Température moyenne annuelle (v
 # Division des données en ensembles d'entraînement (70%) et de test (30%)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-
-
 # Création et entraînement du modèle de régression linéaire
 model = LinearRegression()
 model.fit(X_train, y_train)
 # Génération des prédictions pour l'ensemble d'entraînement et de test
 y_pred_train = model.predict(X_train)
 y_pred_test = model.predict(X_test)
-
 
 evaluate_regression_model(model, X, y)
 
