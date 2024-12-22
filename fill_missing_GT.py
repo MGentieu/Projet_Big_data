@@ -10,7 +10,7 @@ def rename_hdfs_file(hdfs_path):
     subprocess.run([
         "hdfs", "dfs", "-mv",
         f"{hdfs_path}/part-00000-*",  # Part-00000 avec identifiant aléatoire
-        f"{hdfs_path}/../GT.csv"  # Nouveau nom de fichier
+        f"{hdfs_path}/../GT2.csv"  # Nouveau nom de fichier
     ], check=True)
     subprocess.run(["hdfs", "dfs", "-rmdir", "projet/GT_doc.csv"], check=True)
     print(f"Le fichier a été renommé en 'final_output.csv' dans le répertoire HDFS : {hdfs_path}")
@@ -18,7 +18,7 @@ def rename_hdfs_file(hdfs_path):
 def process_partition(rows):
     rows = list(rows)  # Convertir les lignes en une liste modifiable
     initial_rows = rows.copy()
-
+"""
     for i in range(len(rows)):
         if rows[i][0] is None or rows[i][2] is None or rows[i][4] is None or rows[i][6] is None:  # Vérifie les valeurs manquantes
             prev_lavg_temp, next_lavg_temp = None, None
@@ -97,7 +97,7 @@ def process_partition(rows):
                 rows[i][9], #month
                 rows[i][10] #day
             )
-
+"""
     return rows
 
 def fill_missing_values(file_path, output_path, initial_path):
@@ -113,7 +113,7 @@ def fill_missing_values(file_path, output_path, initial_path):
     df = df.withColumn("LandAndOceanAverageTemperature", col("LandAndOceanAverageTemperature").cast(DoubleType()))
 
     original_rdd = df.rdd
-
+    print(original_rdd.take(10))
     filled_rdd = original_rdd.mapPartitions(lambda partition: process_partition(partition))
 
     schema = StructType([
@@ -130,12 +130,12 @@ def fill_missing_values(file_path, output_path, initial_path):
         StructField("day", IntegerType(), True)
     ])
 
-    filled_df = spark.createDataFrame(filled_rdd, schema=schema)
-    subprocess.run(["hdfs", "dfs", "-rm", f"{initial_path}"], check=True)
-    filled_df.coalesce(1).write.option("header", True).mode("overwrite").csv(output_path)
+    #filled_df = spark.createDataFrame(filled_rdd, schema=schema)
+    #subprocess.run(["hdfs", "dfs", "-rm", f"{initial_path}"], check=True)
+    #filled_df.coalesce(1).write.option("header", True).mode("overwrite").csv(output_path)
 
     time.sleep(1)
-    rename_hdfs_file(output_path)
+    #rename_hdfs_file(output_path)
 
 if __name__ == "__main__":
     input_csv_path = "hdfs:///user/root/projet/GlobalTemperatures.csv"
