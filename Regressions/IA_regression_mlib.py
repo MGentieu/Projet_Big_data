@@ -18,7 +18,7 @@ def evaluate_mllib_model(predictions_and_labels):
     print("\n--- Évaluation du Modèle ---")
     print(f"RMSE : {rmse:.4f}")
     print(f"R² : {r2:.4f}")
-
+"""
 spark = SparkSession.builder \
     .appName("TemperatureEvolution_MLlib") \
     .config("spark.executor.memory", "4g") \
@@ -28,6 +28,10 @@ spark = SparkSession.builder \
     .config("spark.storage.memoryFraction", "0.3") \
     .config("spark.memory.storageFraction", "0.2") \
     .config("spark.memory.fraction", "0.6") \
+    .getOrCreate()"""
+
+spark = SparkSession.builder \
+    .appName("TemperatureEvolution") \
     .getOrCreate()
 
 # Charger les données
