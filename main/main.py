@@ -39,7 +39,7 @@ execute_command("spark-submit --deploy-mode client --master local[2] IA_regressi
 
 #Machine learning logistique avec Mlib
 execute_command("spark-submit --deploy-mode client --master local[2] IA_regression_logistique_tunisie.py.py")
-
+execute_command("spark-submit --deploy-mode client --master local[2] logistique.py")
 
 #execute_command("spark-submit --deploy-mode client --master local[2] creation_datasets_exploitables.py")
 

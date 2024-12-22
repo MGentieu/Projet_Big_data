@@ -10,8 +10,8 @@ import pandas as pd
 spark = SparkSession.builder.appName("TemperatureAnalysis").getOrCreate()
 
 # Charger les fichiers CSV en DataFrames Spark
-country_data = spark.read.csv('hdfs:///user/root/projet/GLTBC2.csv', header=True, inferSchema=True)
-state_data = spark.read.csv('hdfs:///user/root/projet/GLTBS2.csv', header=True, inferSchema=True)
+country_data = spark.read.csv('hdfs:///user/root/projet/GlobalLandTemperaturesByCountry.csv', header=True, inferSchema=True)
+state_data = spark.read.csv('hdfs:///user/root/projet/GlobalLandTemperaturesByState.csv', header=True, inferSchema=True)
 
 # Filtrer les données pour les États-Unis
 us_country_data = country_data.filter(col('Country') == 'United States')
@@ -62,7 +62,7 @@ conf_matrix = pd.crosstab(predictions_pd['YearType'], predictions_pd['prediction
 plt.imshow(conf_matrix, cmap='Blues')
 plt.title("Matrice de confusion")
 plt.colorbar()
-plt.savefig('../graphiques/matrice_de_confusion.png')
+plt.savefig('matrice_de_confusion.png')
 plt.close()
 
 # Tracer la courbe ROC
@@ -94,7 +94,7 @@ plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
 plt.legend(loc="lower right")
 plt.grid()
-plt.savefig('../graphiques/roc_curve.png')
+plt.savefig('/roc_curve.png')
 plt.close()
 
 # Ajout des prédictions par État
@@ -158,7 +158,7 @@ colors = ['#ff9999', '#66b3ff']
 plt.figure(figsize=(8, 8))
 plt.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90)
 plt.title('Proportion des États chauds et froids en 2050')
-plt.savefig('../graphiques/proportion_etats_chauds_froids_2050.png')
+plt.savefig('proportion_etats_chauds_froids_2050.png')
 plt.close()
 
 # Arrêter la session Spark
