@@ -81,11 +81,14 @@ evaluate_mllib_model(lr_predictions, evaluator, "Régression Linéaire")
 # Modèle 2 : Régression Polynomiale
 degree = 2
 poly_expansion = PolynomialExpansion(degree=degree, inputCol="features", outputCol="polyFeatures")
-poly_data = poly_expansion.transform(df_yearly_avg)
+
+# Transformation des données d'entraînement et de test avec PolynomialExpansion
+poly_train_data = poly_expansion.transform(train_data)
+poly_test_data = poly_expansion.transform(test_data)
 
 lr_poly = LinearRegression(featuresCol="polyFeatures", labelCol="YearlyAverageTemperature")
-lr_poly_model = lr_poly.fit(poly_data)
-poly_predictions = lr_poly_model.transform(test_data)
+lr_poly_model = lr_poly.fit(poly_train_data)
+poly_predictions = lr_poly_model.transform(poly_test_data)
 evaluate_mllib_model(poly_predictions, evaluator, f"Régression Polynomiale (degré {degree})")
 
 # Modèle 3 : Random Forest
