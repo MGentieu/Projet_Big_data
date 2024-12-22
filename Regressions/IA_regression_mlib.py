@@ -27,10 +27,9 @@ spark = SparkSession.builder \
     .config("spark.executor.instances", "2") \
     .config("spark.executor.cores", "2") \
     .config("spark.storage.memoryFraction", "0.3") \
+    .config("spark.memory.storageFraction", "0.2") \
+    .config("spark.memory.fraction", "0.6") \
     .getOrCreate()
-
-spark.conf.set("spark.memory.storageFraction", "0.2")  # Réduit la mémoire pour les données en cache.
-spark.conf.set("spark.memory.fraction", "0.6")  # Optimise la mémoire pour les calculs.
 
 # Charger les données
 df = spark.read.csv("hdfs:///user/root/projet/GlobalTemperatures.csv", header=True, inferSchema=True)
