@@ -14,7 +14,7 @@ def execute_command(command):
         print(f"Une erreur s'est produite : {e}")
 
 
-# Exemple d'utilisation
+# 3. Traitement des Données avec Spark
 execute_command("spark-submit --deploy-mode client --master local[2] TransfoDate.py")
 
 execute_command("spark-submit --deploy-mode client --master local[2] fill_missing_GLTBC.py") 
@@ -25,6 +25,15 @@ execute_command("spark-submit --deploy-mode client --master local[2] fill_missin
 
 execute_command("chmod +x commandes_suppr_fichiers_inutiles.sh")
 execute_command("./commandes_suppr_fichiers_inutiles.sh")
+
+#Visualisation graphs
+
+
+
+#Machine learning avec Mlib
+
+
+
 
 #execute_command("spark-submit --deploy-mode client --master local[2] creation_datasets_exploitables.py")
 
