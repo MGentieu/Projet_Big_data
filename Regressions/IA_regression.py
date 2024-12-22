@@ -81,10 +81,9 @@ spark = SparkSession.builder \
 df = spark.read.csv("hdfs:///user/root/projet/GlobalTemperatures.csv", header=True, inferSchema=True)
 df.show()
 
-df = df.select("dt", "LandAverageTemperature")
-
-# Étape 4 : Traitement de la colonne 'dt' pour extraire l'année, le mois et le jour
-df = process_date_column(df)
+# Afficher les premières lignes du dataset
+print("\n--- Dataset chargé ---")
+df.show(10)
 
 # Filtrer les données avant 1850
 df = df.filter(col("year") >= 1850)
