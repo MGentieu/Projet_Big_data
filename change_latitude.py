@@ -17,6 +17,8 @@ import sys
 
 def remove_last_char(colonne):
     if colonne and isinstance(colonne, str):  # Vérifier si lat est non-None et une chaîne de caractères
+        if(colonne[-1] in ["S","O"]):
+            return  "-"+colonne[:-1]
         return colonne[:-1]
     return colonne  # Si lat est None ou autre type, retourner tel quel
 
