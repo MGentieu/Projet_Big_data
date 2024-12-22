@@ -4,7 +4,6 @@ from pyspark.mllib.regression import LabeledPoint, LinearRegressionWithSGD
 from pyspark.mllib.evaluation import RegressionMetrics
 import matplotlib.pyplot as plt
 
-
 def evaluate_mllib_model(predictions_and_labels):
     """
     Évalue un modèle MLlib en calculant des métriques comme le RMSE et R².
