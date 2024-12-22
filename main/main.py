@@ -33,10 +33,10 @@ execute_command("./commandes_suppr_fichiers_inutiles.sh")
 # Les données normalisées et nettoyées, on exécute à présent des fichiers afin d'afficher des graphiques et ainsi analyser les tendances :s
 execute_command("spark-submit --deploy-mode client --master local[2] GenerationDesGraphiques.py hdfs:///user/root/projet/GlobalLandTemperaturesByCountry.csv")
 
-#Machine learning avec Mlib
+#Machine learning lineaire avec Mlib
 execute_command("spark-submit --deploy-mode client --master local[2] IA_regression_lineaire.py")
 
-
+#Machine learning logistique avec Mlib
 
 
 #execute_command("spark-submit --deploy-mode client --master local[2] creation_datasets_exploitables.py")
