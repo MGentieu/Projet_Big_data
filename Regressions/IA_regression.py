@@ -9,30 +9,6 @@ from sklearn.model_selection import train_test_split
 
 
 
-def process_date_column(df):
-    """
-    Traite la colonne 'dt' d'un DataFrame Spark, la divise en trois colonnes : 'year', 'month', 'day'.
-    La colonne 'dt' est ensuite supprimée.
-
-    Args:
-    df (DataFrame): DataFrame Spark contenant la colonne 'dt'.
-
-    Returns:
-    DataFrame: DataFrame modifié avec les nouvelles colonnes 'year', 'month', 'day'.
-    """
-    if "dt" in df.columns:
-        # Séparer la colonne 'dt' en trois colonnes : 'year', 'month', 'day'
-        df = df.withColumn("year", split(col("dt"), "-").getItem(0).cast(IntegerType()))
-        df = df.withColumn("month", split(col("dt"), "-").getItem(1).cast(IntegerType()))
-        df = df.withColumn("day", split(col("dt"), "-").getItem(2).cast(IntegerType()))
-
-        # Supprimer la colonne 'dt'
-        df = df.drop("dt")
-    else:
-        print("La colonne 'dt' est absente dans le DataFrame.")
-
-    return df
-
 def evaluate_regression_model(model, X_test, y_test):
     """
     Évalue et affiche la performance d'un modèle de régression linéaire.
