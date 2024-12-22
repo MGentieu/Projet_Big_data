@@ -34,7 +34,8 @@ execute_command("./commandes_suppr_fichiers_inutiles.sh")
 execute_command("spark-submit --deploy-mode client --master local[2] GenerationDesGraphiques.py hdfs:///user/root/projet/GlobalLandTemperaturesByCountry.csv")
 
 #Machine learning lineaire avec Mlib
-execute_command("spark-submit --deploy-mode client --master local[2] IA_regression_lineaire.py")
+execute_command("spark-submit --deploy-mode client --master local[2] IA_regression_lineaire_par_année.py")
+execute_command("spark-submit --deploy-mode client --master local[2] IA_regression_lineaire_pays_date.py")
 
 #Machine learning logistique avec Mlib
 
