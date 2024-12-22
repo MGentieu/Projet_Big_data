@@ -5,20 +5,6 @@ import time
 from pyspark.sql.window import Window
 from pyspark.sql.functions import col, avg, last, first, lit
 
-def interpolate_missing_values(df):
-    # Définir une fenêtre par ordre croissant sur la colonne "dt"
-    window_spec = Window.partitionBy("City").orderBy("dt").rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)
-
-    # Combler les valeurs manquantes avec la moyenne entre les précédentes et les suivantes
-    df = df.withColumn(
-        "AverageTemperature",
-        avg(col("AverageTemperature")).over(window_spec)
-    ).withColumn(
-        "AverageTemperatureUncertainty",
-        avg(col("AverageTemperatureUncertainty")).over(window_spec)
-    )
-
-    return df
 
 def rename_hdfs_file(hdfs_path):
     try:
@@ -26,7 +12,7 @@ def rename_hdfs_file(hdfs_path):
         subprocess.run([
             "hdfs", "dfs", "-mv",
             f"{hdfs_path}/part-00000-*",
-            f"{hdfs_path}/../GLTBCi.csv"
+            f"{hdfs_path}/../GLTBCi2.csv"
         ], check=True)
         subprocess.run(["hdfs", "dfs", "-rmdir", "projet/GLTBCi_doc.csv"], check=True)
         print(f"Le fichier a été renommé avec succès dans HDFS : {hdfs_path}")
@@ -82,7 +68,7 @@ def fill_missing_values(file_path, output_path):
     rename_hdfs_file(output_path)
 
 if __name__ == "__main__":
-    input_csv_path = "hdfs:///user/root/projet/GlobalLandTemperaturesByCity.csv"
+    input_csv_path = "hdfs:///user/root/projet/GLTBCi.csv"
     output_csv_path = "hdfs:///user/root/projet/GLTBCi_doc.csv"
     fill_missing_values(input_csv_path, output_csv_path)
 
