@@ -21,8 +21,8 @@ def evaluate_mllib_model(predictions_and_labels):
 
 spark = SparkSession.builder \
     .appName("TemperatureEvolution_MLlib") \
-    .config("spark.executor.memory", "2g") \
-    .config("spark.driver.memory", "1g") \
+    .config("spark.executor.memory", "4g") \
+    .config("spark.driver.memory", "2g") \
     .config("spark.executor.instances", "2") \
     .config("spark.executor.cores", "2") \
     .config("spark.storage.memoryFraction", "0.3") \
