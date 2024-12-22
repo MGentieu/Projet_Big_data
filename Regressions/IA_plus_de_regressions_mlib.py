@@ -1,12 +1,8 @@
-import os
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, split
 from pyspark.ml.feature import VectorAssembler, PolynomialExpansion
 from pyspark.ml.regression import LinearRegression, RandomForestRegressor, GBTRegressor
-from pyspark.ml import Pipeline
 from pyspark.ml.evaluation import RegressionEvaluator
 import matplotlib.pyplot as plt
-import numpy as np
 
 
 # Fonction d'évaluation du modèle
