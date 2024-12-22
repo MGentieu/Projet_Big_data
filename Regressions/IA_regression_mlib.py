@@ -29,11 +29,11 @@ spark = SparkSession.builder \
 
 # Charger les données
 df = spark.read.csv("hdfs:///user/root/projet/GlobalTemperatures.csv", header=True, inferSchema=True)
-df = df.select("dt", "LandAverageTemperature")
-
 # Afficher les premières lignes du dataset
 print("\n--- Dataset chargé ---")
 df.show(10)
+df = df.select("dt", "LandAverageTemperature")
+
 
 # Filtrer les données pour garder uniquement celles après 1850
 df = df.filter(col("year") >= 1850)
