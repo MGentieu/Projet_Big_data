@@ -31,7 +31,7 @@ execute_command("chmod +x commandes_suppr_fichiers_inutiles.sh")
 execute_command("./commandes_suppr_fichiers_inutiles.sh")
 
 # Les données normalisées et nettoyées, on exécute à présent des fichiers afin d'afficher des graphiques et ainsi analyser les tendances :s
-
+execute_command("spark-submit --deploy-mode client --master local[2] ../graphiques/GenerationDesGraphiques.py hdfs:///user/root/projet/GlobalLandTemperaturesByCountry.csv")
 
 
 #Machine learning avec Mlib
