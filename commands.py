@@ -20,6 +20,7 @@ execute_command("spark-submit --deploy-mode client --master local[2] TransfoDate
 execute_command("spark-submit --deploy-mode client --master local[2] fill_missing_GLTBC.py") 
 execute_command("spark-submit --deploy-mode client --master local[2] fill_missing_GLTBMC.py")
 execute_command("spark-submit --deploy-mode client --master local[2] fill_missing_GT.py")
+execute_command("spark-submit --deploy-mode client --master local[2] fill_missing_GLTBS.py") 
 execute_command("spark-submit --deploy-mode client --master local[2] fill_missing_GLTBCi.py") 
 
 
