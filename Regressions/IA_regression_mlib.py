@@ -23,7 +23,12 @@ def evaluate_mllib_model(predictions_and_labels):
 
 # Créer une session Spark
 spark = SparkSession.builder \
-    .appName("TemperatureEvolution_MLlib") \
+    .appName("Handle Missing Values") \
+    .config("spark.executor.memory", "2g") \
+    .config("spark.driver.memory", "1g") \
+    .config("spark.executor.cores", "2") \
+    .config("spark.sql.shuffle.partitions", "8") \
+    .config("spark.master", "local[2]") \
     .getOrCreate()
 
 # Charger les données
