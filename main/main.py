@@ -1,5 +1,5 @@
 import subprocess
-#python main.py
+
 def execute_command(command):
     try:
         # Exécuter la commande et capturer les flux stdout et stderr
@@ -12,7 +12,6 @@ def execute_command(command):
         print(f"Code de retour : {process.returncode}")
     except Exception as e:
         print(f"Une erreur s'est produite : {e}")
-
 
 # On transforme à chaque fois l'attribut 'date', que l'on décompose en année, mois, jour :
 execute_command("spark-submit --deploy-mode client --master local[2] TransfoDate.py")
@@ -40,8 +39,3 @@ execute_command("spark-submit --deploy-mode client --master local[2] IA_regressi
 #Machine learning logistique avec Mlib
 execute_command("spark-submit --deploy-mode client --master local[2] IA_regression_logistique_tunisie.py.py")
 execute_command("spark-submit --deploy-mode client --master local[2] logistique.py")
-
-#execute_command("spark-submit --deploy-mode client --master local[2] creation_datasets_exploitables.py")
-
-#execute_command("spark-submit --deploy-mode client --master local[2] genere_graphiques.py hdfs:///user/root/projet/AvgTempByCo.csv")
-
