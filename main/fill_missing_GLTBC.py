@@ -1,11 +1,8 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
 from pyspark.sql.types import DoubleType
-from pyspark.sql import Row
-import sys
 import time
 import subprocess
-
 
 def rename_hdfs_file(hdfs_path):
 
@@ -53,38 +50,20 @@ def process_partition(rows):
 
 			# Remplir les valeurs manquantes avec ces moyennes
 			rows[i] = (avg_temp, avg_uncert,rows[i][2], rows[i][3], rows[i][4], rows[i][5])
-	"""
-	print('\n')
-	print('\n')
-	print('Partition après traitement :')
-	print('\n')
-	print('\n')
-	print(rows)
-	"""
+
 	return rows
 
 def fill_missing_values(file_path, output_path):
-        # Initialiser une session Spark
 	spark = SparkSession.builder \
 	.appName("Handle Missing Values") \
 	.getOrCreate()
 
-	# Charger le fichier CSV dans un DataFrame Spark
 	df = spark.read.csv(file_path, header=True, inferSchema=True)
 
-	# Conversion des colonnes AverageTemperature et AverageTemperatureUncertainty en Double
 	df = df.withColumn("AverageTemperature", col("AverageTemperature").cast(DoubleType()))
 	df = df.withColumn("AverageTemperatureUncertainty", col("AverageTemperatureUncertainty").cast(DoubleType()))
-	#df = df.withColumn("year", split(col("dt"), "-").getItem(0).cast(IntegerType()))
-	#df = df.withColumn("month", split(col("dt"), "-").getItem(1).cast(IntegerType()))
-	#df = df.withColumn("day", split(col("dt"), "-").getItem(2).cast(IntegerType()))
-	# Supprimer la colonne "dt"
 	df = df.drop("dt")
-	# Convertir le DataFrame en RDD pour un traitement partitionné
 	original_rdd = df.rdd
-
-	# Algorithme pour combler les valeurs manquantes
-
 
 	# Appliquer le traitement partition par partition
 	filled_rdd = original_rdd.mapPartitions(lambda partition: process_partition(partition))
@@ -104,15 +83,8 @@ def fill_missing_values(file_path, output_path):
 
 
 if __name__ == "__main__":
-	#if len(sys.argv) != 3:
-	#	print("Usage: python handle_missing_values.py <input_csv_path> <output_csv_path>")
-	#	sys.exit(1)
 
-	#input_csv_path = sys.argv[1]
-	#output_csv_path = sys.argv[2]
 	input_csv_path = "hdfs:///user/root/projet/GLTBCo.csv"
 	output_csv_path = "hdfs:///user/root/projet/GLTBC_doc.csv"
-	# Appeler la fonction pour traiter le fichier
+
 	fill_missing_values(input_csv_path, output_csv_path)
-
-

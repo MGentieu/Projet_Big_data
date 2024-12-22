@@ -1,26 +1,21 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, year, mean, when, lit
+from pyspark.sql.functions import col, mean, when
 from pyspark.ml.feature import VectorAssembler
 from pyspark.ml.classification import LogisticRegression
 from pyspark.ml.evaluation import BinaryClassificationEvaluator
 import matplotlib.pyplot as plt
 import pandas as pd
 
-# Créer une session Spark
 spark = SparkSession.builder.appName("TemperatureAnalysis").getOrCreate()
 
-# Charger les fichiers CSV en DataFrames Spark
 country_data = spark.read.csv('hdfs:///user/root/projet/GlobalLandTemperaturesByCountry.csv', header=True, inferSchema=True)
 state_data = spark.read.csv('hdfs:///user/root/projet/GlobalLandTemperaturesByState.csv', header=True, inferSchema=True)
 
-# Filtrer les données pour les États-Unis
 us_country_data = country_data.filter(col('Country') == 'United States')
 us_state_data = state_data.filter(col('Country') == 'United States')
-# Ajouter une colonne 'Year' et filtrer les données valides
 us_country_data = us_country_data.filter(col('year') >= 1811)
 us_state_data = us_state_data.filter(col('year') >= 1811)
 
-# Calculer les moyennes annuelles
 country_avg_temp = us_country_data.groupBy('year').agg(
     mean('AverageTemperature').alias('CountryAvgTemp'),
     mean('AverageTemperatureUncertainty').alias('AvgTempUncertainty')
@@ -41,14 +36,13 @@ feature_columns = ['year', 'StateAvgTemp', 'AvgTempUncertainty']
 assembler = VectorAssembler(inputCols=feature_columns, outputCol='features')
 merged_data = assembler.transform(merged_data).select('features', 'YearType')
 
-# Diviser les données
+
 train_data, test_data = merged_data.randomSplit([0.8, 0.2], seed=42)
 
 # Entraîner un modèle de régression logistique
 lr = LogisticRegression(labelCol='YearType', featuresCol='features', maxIter=100)
 model = lr.fit(train_data)
 
-# Faire des prédictions
 predictions = model.transform(test_data)
 
 # Évaluation du modèle
@@ -161,5 +155,4 @@ plt.title('Proportion des États chauds et froids en 2050')
 plt.savefig('proportion_etats_chauds_froids_2050.png')
 plt.close()
 
-# Arrêter la session Spark
 spark.stop()

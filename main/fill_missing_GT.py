@@ -1,7 +1,6 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
 from pyspark.sql.types import DoubleType, StructType, StructField, StringType, IntegerType
-import sys
 import time
 import subprocess
 
@@ -131,7 +130,6 @@ def fill_missing_values(file_path, output_path):
     ])
 
     filled_df = spark.createDataFrame(filled_rdd, schema=schema)
-    #subprocess.run(["hdfs", "dfs", "-rm", f"{file_path}"], check=True)
     filled_df.coalesce(1).write.option("header", True).mode("overwrite").csv(output_path)
 
     time.sleep(1)
@@ -141,4 +139,3 @@ if __name__ == "__main__":
     input_csv_path = "hdfs:///user/root/projet/GT.csv"
     output_csv_path = "hdfs:///user/root/projet/GT_doc.csv"
     fill_missing_values(input_csv_path, output_csv_path)
-

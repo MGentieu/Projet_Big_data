@@ -24,23 +24,18 @@ def rename_hdfs_file(hdfs_path, title):
         print(f"Erreur dans le renommage : {e}")
 
 def process_csv_files(csv_files, output_dir, titles):
-    # Initialiser une session Spark
     spark = SparkSession.builder \
         .appName("Process CSV Files") \
         .getOrCreate()
 
     for i, file_path in enumerate(csv_files):
-        # Charger le fichier CSV dans un DataFrame Spark
         df = spark.read.csv(file_path, header=True, inferSchema=True)
 
-        # Vérifier si la colonne "dt" existe
         if "dt" in df.columns:
-            # Séparer la colonne "dt" en trois colonnes : year, month, day
             df = df.withColumn("year", split(col("dt"), "-").getItem(0).cast(IntegerType()))
             df = df.withColumn("month", split(col("dt"), "-").getItem(1).cast(IntegerType()))
             df = df.withColumn("day", split(col("dt"), "-").getItem(2).cast(IntegerType()))
 
-            # Supprimer la colonne "dt"
             df = df.drop("dt")
 
         # Sauvegarder directement dans HDFS
@@ -52,7 +47,6 @@ def process_csv_files(csv_files, output_dir, titles):
         rename_hdfs_file(output_path, titles[i])
 
 if __name__ == "__main__":
-    # Liste des fichiers CSV à traiter
     csv_files = [
         "hdfs:///user/root/projet/GlobalLandTemperaturesByCountry.csv",
         "hdfs:///user/root/projet/GlobalLandTemperaturesByMajorCity.csv",
@@ -63,10 +57,7 @@ if __name__ == "__main__":
     titles = ["GLTBCo", "GLTBMC", "GT", "GLTBS", "GLTBCi"]
     output_dir = "hdfs:///user/root/projet"
 
-    # Traiter les fichiers CSV
     process_csv_files(csv_files, output_dir, titles)
 
-
-    #Nettoyage final
     subprocess.run(["hdfs", "dfs", "-rmdir","projet/GT"], check=True)
     subprocess.run(["hdfs", "dfs", "-rmdir","projet/GLTB*"], check=True)

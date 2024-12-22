@@ -1,12 +1,6 @@
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import col
-from pyspark.sql.types import DoubleType
-from pyspark.sql import Row
-import sys
 import time
 import subprocess
 from change_latitude import *
-
 
 def rename_hdfs_file(hdfs_path):
 
@@ -67,55 +61,35 @@ def process_partition(rows):
         return rows
 
 def fill_missing_values(file_path, output_path):
-        # Initialiser une session Spark
-	spark = SparkSession.builder \
-	.appName("Handle Missing Values") \
-	.getOrCreate()
+    spark = SparkSession.builder \
+    .appName("Handle Missing Values") \
+    .getOrCreate()
 
-	# Charger le fichier CSV dans un DataFrame Spark
-	df = spark.read.csv(file_path, header=True, inferSchema=True)
+    df = spark.read.csv(file_path, header=True, inferSchema=True)
 
-	# Conversion des colonnes AverageTemperature et AverageTemperatureUncertainty en Double
-	df = df.withColumn("AverageTemperature", col("AverageTemperature").cast(DoubleType()))
-	df = df.withColumn("AverageTemperatureUncertainty", col("AverageTemperatureUncertainty").cast(DoubleType()))
-	df = normalise_latitude_longitude(df)
-	# Convertir le DataFrame en RDD pour un traitement partitionné
-	original_rdd = df.rdd
+    df = df.withColumn("AverageTemperature", col("AverageTemperature").cast(DoubleType()))
+    df = df.withColumn("AverageTemperatureUncertainty", col("AverageTemperatureUncertainty").cast(DoubleType()))
+    df = normalise_latitude_longitude(df)
+    original_rdd = df.rdd
 
-	# Algorithme pour combler les valeurs manquantes
+    filled_rdd = original_rdd.mapPartitions(lambda partition: process_partition(partition))
+    print("Exemple de lignes dans le RDD traité :")
+    print(filled_rdd.take(5))
 
+    filled_df = spark.createDataFrame(filled_rdd, schema=["AverageTemperature", "AverageTemperatureUncertainty",
+    "City", "Country", "Latitude","Longitude", "year", "month", "day"])
+    filled_df.show(15)
 
-	# Appliquer le traitement partition par partition
-	filled_rdd = original_rdd.mapPartitions(lambda partition: process_partition(partition))
-	print("Exemple de lignes dans le RDD traité :")
-	print(filled_rdd.take(5))
+    filled_df.coalesce(1).write.option("header", True).mode("overwrite").csv(output_path)
 
-	# Convertir l'RDD corrigé en DataFrame
-	#filled_df = spark.createDataFrame(filled_rdd, schema=df.schema)
-	#filled_df = filled_rdd.map(lambda x:Row(dt=x[0],AverageTemperature=x[1],AverageTemperatureUncertainty=x[2],Country=x[3]).toDF()
-	filled_df = spark.createDataFrame(filled_rdd, schema=["AverageTemperature", "AverageTemperatureUncertainty",
-	"City", "Country", "Latitude","Longitude", "year", "month", "day"])
-	filled_df.show(15)
+    time.sleep(1)
 
-	# Regrouper les partitions en une seule
-	filled_df.coalesce(1).write.option("header", True).mode("overwrite").csv(output_path)
-
-	time.sleep(1)
-	
-	rename_hdfs_file(output_path)
+    rename_hdfs_file(output_path)
 
 
 if __name__ == "__main__":
-	#if len(sys.argv) != 3:
-	#	print("Usage: python handle_missing_values.py <input_csv_path> <output_csv_path>")
-	#	sys.exit(1)
 
-	#input_csv_path = sys.argv[1]
-	#output_csv_path = sys.argv[2]
-	input_csv_path = "hdfs:///user/root/projet/GLTBMC.csv"
-	output_csv_path = "hdfs:///user/root/projet/GLTBMC_doc.csv"
+    input_csv_path = "hdfs:///user/root/projet/GLTBMC.csv"
+    output_csv_path = "hdfs:///user/root/projet/GLTBMC_doc.csv"
 
-	# Appeler la fonction pour traiter le fichier
-	fill_missing_values(input_csv_path, output_csv_path)
-
-
+    fill_missing_values(input_csv_path, output_csv_path)
