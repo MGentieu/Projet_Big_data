@@ -8,7 +8,6 @@ from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 
 
-
 def evaluate_regression_model(model, X_test, y_test):
     """
     Évalue et affiche la performance d'un modèle de régression linéaire.
@@ -55,7 +54,6 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 df = spark.read.csv("hdfs:///user/root/projet/GlobalTemperatures.csv", header=True, inferSchema=True)
-df.show()
 
 # Afficher les premières lignes du dataset
 print("\n--- Dataset chargé ---")
@@ -67,7 +65,6 @@ df = df.filter(col("year") >= 1850)
 # Étape 5 : Calcul de la température moyenne par année
 df_yearly_avg = df.groupBy("year").avg("LandAverageTemperature").withColumnRenamed("avg(LandAverageTemperature)",
                                                                                    "YearlyAverageTemperature")
-
 # Conversion en Pandas pour la visualisation et la régression linéaire
 df_pd = df_yearly_avg.toPandas()
 df_pd = df_pd.sort_values(by="year")
