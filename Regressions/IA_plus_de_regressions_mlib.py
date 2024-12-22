@@ -20,8 +20,16 @@ def evaluate_mllib_model(predictions, evaluator, model_name):
 
     # Visualisation
     plt.figure(figsize=(12, 6))
+
+    # Utilisez les données complètes pour l'axe x
     plt.plot(df_pd['year'], df_pd['YearlyAverageTemperature'], color='blue', label='Température moyenne annuelle')
-    plt.plot(df_pd['year'], predictions.select("prediction").toPandas(), label=f'Tendance ({model_name})', linestyle='--')
+
+    # Utilisez les prédictions sur l'ensemble de test (les prédictions sont calculées sur les années)
+    predictions_pd = predictions.select("year", "prediction").toPandas()
+    predictions_pd = predictions_pd.sort_values(by="year")
+
+    # Tracez la tendance
+    plt.plot(predictions_pd['year'], predictions_pd['prediction'], label=f'Tendance ({model_name})', linestyle='--')
     plt.title(f"Évolution de la température moyenne avec {model_name}")
     plt.xlabel("Année")
     plt.ylabel("Température moyenne (°C)")
