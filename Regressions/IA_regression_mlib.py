@@ -1,6 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, split
-from pyspark.sql.types import IntegerType
+from pyspark.sql.functions import col
 from pyspark.mllib.regression import LabeledPoint, LinearRegressionWithSGD
 from pyspark.mllib.evaluation import RegressionMetrics
 import matplotlib.pyplot as plt
@@ -29,11 +28,10 @@ spark = SparkSession.builder \
 
 # Charger les données
 df = spark.read.csv("hdfs:///user/root/projet/GlobalTemperatures.csv", header=True, inferSchema=True)
+
 # Afficher les premières lignes du dataset
 print("\n--- Dataset chargé ---")
 df.show(10)
-df = df.select("dt", "LandAverageTemperature")
-
 
 # Filtrer les données pour garder uniquement celles après 1850
 df = df.filter(col("year") >= 1850)
@@ -41,6 +39,10 @@ df = df.filter(col("year") >= 1850)
 # Calculer la température moyenne par année
 df_yearly_avg = df.groupBy("year").avg("LandAverageTemperature").withColumnRenamed("avg(LandAverageTemperature)",
                                                                                    "YearlyAverageTemperature")
+
+# Afficher les données annuelles moyennes pour vérification
+print("\n--- Température moyenne annuelle ---")
+df_yearly_avg.show(10)
 
 # Convertir les données en RDD pour MLlib
 rdd = df_yearly_avg.rdd.map(lambda row: LabeledPoint(row["YearlyAverageTemperature"], [row["year"]]))
