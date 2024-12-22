@@ -13,21 +13,22 @@ spark = SparkSession.builder \
 # Charger le dataset depuis HDFS
 df = spark.read.csv("hdfs:///user/root/projet/GlobalLandTemperaturesByCountry.csv", header=True, inferSchema=True)
 
-# Filtrer les données pour la Tunisie
+# Afficher les premières lignes du dataset
+print("\n--- Dataset chargé ---")
+df.show(10)
+
+# Filtrer les données pour la Tunisie (le reste reste inchangé)
 df_tunisia = df.filter(df['Country'] == 'Tunisia')
 
-# Convertir la colonne 'dt' en type date et extraire le mois
-df_tunisia = df_tunisia.withColumn('dt', to_date(col('dt'), 'yyyy-MM-dd'))
-df_tunisia = df_tunisia.withColumn('Month', month(col('dt')))
-
-# Créer une colonne catégorielle "Season"
+# Créer une colonne catégorielle "Season" en fonction de la colonne 'month'
 df_tunisia = df_tunisia.withColumn(
     'Season',
-    when((col('Month') == 12) | (col('Month') <= 2), 'Winter')
-    .when((col('Month') >= 6) & (col('Month') <= 8), 'Summer')
+    when((col('month') == 12) | (col('month') <= 2), 'Winter')
+    .when((col('month') >= 6) & (col('month') <= 8), 'Summer')
     .otherwise('Transition')
 )
 
+# Afficher les premières lignes pour vérification
 df_tunisia.show(10)
 
 # Garder les colonnes nécessaires et supprimer les valeurs nulles
@@ -92,6 +93,7 @@ plt.grid(True, linestyle="--", alpha=0.5)
 # Sauvegarder le graphique
 plt.savefig("season_predictions_tunisia.png", dpi=300)
 print("Graphique sauvegardé sous le nom 'season_predictions_tunisia.png'.")
+
 
 # Arrêter la session Spark
 spark.stop()
