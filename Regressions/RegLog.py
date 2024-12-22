@@ -93,6 +93,5 @@ plt.grid(True, linestyle="--", alpha=0.5)
 plt.savefig("season_predictions_tunisia.png", dpi=300)
 print("Graphique sauvegardé sous le nom 'season_predictions_tunisia.png'.")
 
-
 # Arrêter la session Spark
 spark.stop()
