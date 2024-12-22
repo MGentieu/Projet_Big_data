@@ -1,5 +1,5 @@
 import subprocess
-
+#python main.py
 def execute_command(command):
     try:
         # Exécuter la commande et capturer les flux stdout et stderr
