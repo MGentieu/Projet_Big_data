@@ -18,17 +18,6 @@ def evaluate_mllib_model(predictions_and_labels):
     print("\n--- Évaluation du Modèle ---")
     print(f"RMSE : {rmse:.4f}")
     print(f"R² : {r2:.4f}")
-"""
-spark = SparkSession.builder \
-    .appName("TemperatureEvolution_MLlib") \
-    .config("spark.executor.memory", "4g") \
-    .config("spark.driver.memory", "2g") \
-    .config("spark.executor.instances", "2") \
-    .config("spark.executor.cores", "2") \
-    .config("spark.storage.memoryFraction", "0.3") \
-    .config("spark.memory.storageFraction", "0.2") \
-    .config("spark.memory.fraction", "0.6") \
-    .getOrCreate()"""
 
 spark = SparkSession.builder \
     .appName("TemperatureEvolution") \
@@ -41,12 +30,14 @@ df = spark.read.csv("hdfs:///user/root/projet/GlobalTemperatures.csv", header=Tr
 print("\n--- Dataset chargé ---")
 df.show(10)
 
+df = df.filter((col("LandAverageTemperature") < 1e10) & (col("LandAverageTemperature") > -1e10))
 # Filtrer les données pour garder uniquement celles après 1850
 df = df.filter(col("year") >= 1850)
 
 # Calculer la température moyenne par année
 df_yearly_avg = df.groupBy("year").avg("LandAverageTemperature").withColumnRenamed("avg(LandAverageTemperature)",
                                                                                    "YearlyAverageTemperature")
+df_yearly_avg = df_yearly_avg.filter((col("YearlyAverageTemperature") < 1e10) & (col("YearlyAverageTemperature") > -1e10))
 
 # Afficher les données annuelles moyennes pour vérification
 print("\n--- Température moyenne annuelle ---")
