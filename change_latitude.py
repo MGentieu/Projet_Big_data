@@ -20,7 +20,7 @@ def remove_last_char(colonne):
         return colonne[:-1]
     return colonne  # Si lat est None ou autre type, retourner tel quel
 
-def remove_latitude_longitude(df):
+def normalise_latitude_longitude(df):
     remove_last_char_udf = udf(remove_last_char)
     df = df.withColumn("Latitude", remove_last_char_udf(df["Latitude"]))
     df = df.withColumn("Longitude",remove_last_char_udf(df["Longitude"]))

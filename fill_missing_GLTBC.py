@@ -13,7 +13,7 @@ def rename_hdfs_file(hdfs_path):
     subprocess.run([
         "hdfs", "dfs", "-mv",
         f"{hdfs_path}/part-00000-*",  # Part-00000 avec identifiant aléatoire
-        f"{hdfs_path}/../GLTBC.csv"  # Nouveau nom de fichier
+        f"{hdfs_path}/../GLTBC2.csv"  # Nouveau nom de fichier
     ], check=True)
     subprocess.run(["hdfs", "dfs", "-rmdir", "projet/GLTBC_doc.csv"], check=True)
     print(f"Le fichier a été renommé en 'final_output.csv' dans le répertoire HDFS : {hdfs_path}")
@@ -24,7 +24,7 @@ def process_partition(rows):
 	initial_rows = rows.copy()
 
 	for i in range(len(rows)):
-		if rows[i][1] is None or rows[i][2] is None:  # Vérifie les valeurs manquantes
+		if rows[i][0] is None or rows[i][1] is None:  # Vérifie les valeurs manquantes
 			# Récupérer les précédentes et suivantes valeurs valides dans la copie initiale
 			prev_temp=None
 			prev_uncert=None
@@ -33,14 +33,14 @@ def process_partition(rows):
 
 			# Rechercher les valeurs précédentes valides
 			for j in range(i - 1, -1, -1):
-				if initial_rows[j][1] is not None and initial_rows[j][2] is not None:
-					prev_temp, prev_uncert = initial_rows[j][1], initial_rows[j][2]
+				if initial_rows[j][0] is not None and initial_rows[j][1] is not None:
+					prev_temp, prev_uncert = initial_rows[j][0], initial_rows[j][1]
 					break
 
 			# Rechercher les valeurs suivantes valides
 			for j in range(i + 1, len(rows)):
-				if initial_rows[j][1] is not None and initial_rows[j][2] is not None:
-					next_temp, next_uncert = initial_rows[j][1], initial_rows[j][2]
+				if initial_rows[j][0] is not None and initial_rows[j][1] is not None:
+					next_temp, next_uncert = initial_rows[j][0], initial_rows[j][1]
 					break
 
 			# Calculer les moyennes uniquement si les deux valeurs sont valides
@@ -52,7 +52,7 @@ def process_partition(rows):
 			)
 
 			# Remplir les valeurs manquantes avec ces moyennes
-			rows[i] = (rows[i][0], avg_temp, avg_uncert, rows[i][3])
+			rows[i] = (avg_temp, avg_uncert,rows[i][2], rows[i][3], rows[i][4], rows[i][5])
 	"""
 	print('\n')
 	print('\n')
@@ -75,9 +75,9 @@ def fill_missing_values(file_path, output_path):
 	# Conversion des colonnes AverageTemperature et AverageTemperatureUncertainty en Double
 	df = df.withColumn("AverageTemperature", col("AverageTemperature").cast(DoubleType()))
 	df = df.withColumn("AverageTemperatureUncertainty", col("AverageTemperatureUncertainty").cast(DoubleType()))
-	df = df.withColumn("year", split(col("dt"), "-").getItem(0).cast(IntegerType()))
-	df = df.withColumn("month", split(col("dt"), "-").getItem(1).cast(IntegerType()))
-	df = df.withColumn("day", split(col("dt"), "-").getItem(2).cast(IntegerType()))
+	#df = df.withColumn("year", split(col("dt"), "-").getItem(0).cast(IntegerType()))
+	#df = df.withColumn("month", split(col("dt"), "-").getItem(1).cast(IntegerType()))
+	#df = df.withColumn("day", split(col("dt"), "-").getItem(2).cast(IntegerType()))
 	# Supprimer la colonne "dt"
 	df = df.drop("dt")
 	# Convertir le DataFrame en RDD pour un traitement partitionné
@@ -110,7 +110,7 @@ if __name__ == "__main__":
 
 	#input_csv_path = sys.argv[1]
 	#output_csv_path = sys.argv[2]
-	input_csv_path = "hdfs:///user/root/projet/GlobalLandTemperaturesByCountry.csv"
+	input_csv_path = "hdfs:///user/root/projet/GLTBCo.csv"
 	output_csv_path = "hdfs:///user/root/projet/GLTBC_doc.csv"
 	# Appeler la fonction pour traiter le fichier
 	fill_missing_values(input_csv_path, output_csv_path)
