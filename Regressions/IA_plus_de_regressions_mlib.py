@@ -66,13 +66,8 @@ df_pd = df_pd.sort_values(by="year")
 assembler = VectorAssembler(inputCols=["year"], outputCol="features")
 df_yearly_avg = assembler.transform(df_yearly_avg)
 
-# Appliquer la transformation polynomiale
-degree = 2
-poly_expansion = PolynomialExpansion(degree=degree, inputCol="features", outputCol="polyFeatures")
-df_poly = poly_expansion.transform(df_yearly_avg)
-
 # Séparer les données en ensembles d'entraînement et de test
-train_data, test_data = df_poly.randomSplit([0.7, 0.3], seed=42)
+train_data, test_data = df_yearly_avg.randomSplit([0.7, 0.3], seed=42)
 
 # Evaluation avec un Regresseur
 evaluator = RegressionEvaluator(labelCol="YearlyAverageTemperature", predictionCol="prediction")
@@ -84,8 +79,12 @@ lr_predictions = lr_model.transform(test_data)
 evaluate_mllib_model(lr_predictions, evaluator, "Régression Linéaire")
 
 # Modèle 2 : Régression Polynomiale
+degree = 2
+poly_expansion = PolynomialExpansion(degree=degree, inputCol="features", outputCol="polyFeatures")
+poly_data = poly_expansion.transform(df_yearly_avg)
+
 lr_poly = LinearRegression(featuresCol="polyFeatures", labelCol="YearlyAverageTemperature")
-lr_poly_model = lr_poly.fit(train_data)
+lr_poly_model = lr_poly.fit(poly_data)
 poly_predictions = lr_poly_model.transform(test_data)
 evaluate_mllib_model(poly_predictions, evaluator, f"Régression Polynomiale (degré {degree})")
 
