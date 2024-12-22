@@ -47,6 +47,9 @@ spark = SparkSession.builder \
 # Chargement des données
 df = spark.read.csv("hdfs:///user/root/projet/GlobalTemperatures.csv", header=True, inferSchema=True)
 
+# Supprimer les dates avant 1850
+df = df.filter(df.year >= 1850)
+
 # Afficher les premières lignes du dataset
 print("\n--- Dataset chargé ---")
 df.show(10)
