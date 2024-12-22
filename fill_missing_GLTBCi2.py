@@ -5,6 +5,7 @@ import time
 from pyspark.sql.window import Window
 from pyspark.sql.functions import col, avg, last, first, lit, when, lag, lead
 from pyspark.sql.window import Window
+from change_latitude import *
 
 def rename_hdfs_file(hdfs_path):
     try:
@@ -56,6 +57,7 @@ def fill_missing_values(file_path, output_path):
 
     df = spark.read.csv(file_path, header=True, inferSchema=True)
 
+    df = normalise_latitude_longitude(df)
     # Convertir les colonnes à leurs types appropriés
     df = df.withColumn("AverageTemperature", col("AverageTemperature").cast(DoubleType()))
     df = df.withColumn("AverageTemperatureUncertainty", col("AverageTemperatureUncertainty").cast(DoubleType()))

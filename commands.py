@@ -21,9 +21,12 @@ execute_command("spark-submit --deploy-mode client --master local[2] fill_missin
 execute_command("spark-submit --deploy-mode client --master local[2] fill_missing_GLTBMC.py")
 execute_command("spark-submit --deploy-mode client --master local[2] fill_missing_GT.py")
 execute_command("spark-submit --deploy-mode client --master local[2] fill_missing_GLTBS.py") 
-execute_command("spark-submit --deploy-mode client --master local[2] fill_missing_GLTBCi.py") 
+execute_command("spark-submit --deploy-mode client --master local[2] fill_missing_GLTBCi2.py") 
 
+execute_command("chmod +x commandes_suppr_fichiers_inutiles.sh")
+execute_command("./commandes_suppr_fichiers_inutiles.sh")
 
-execute_command("spark-submit --deploy-mode client --master local[2] creation_datasets_exploitables.py")
+#execute_command("spark-submit --deploy-mode client --master local[2] creation_datasets_exploitables.py")
 
-execute_command("spark-submit --deploy-mode client --master local[2] genere_graphiques.py hdfs:///user/root/projet/AvgTempByCo.csv")
+#execute_command("spark-submit --deploy-mode client --master local[2] genere_graphiques.py hdfs:///user/root/projet/AvgTempByCo.csv")
+
