@@ -20,16 +20,17 @@ def evaluate_mllib_model(predictions_and_labels):
     print(f"RMSE : {rmse:.4f}")
     print(f"R² : {r2:.4f}")
 
-
-# Créer une session Spark
 spark = SparkSession.builder \
-    .appName("Handle Missing Values") \
+    .appName("TemperatureEvolution_MLlib") \
     .config("spark.executor.memory", "2g") \
     .config("spark.driver.memory", "1g") \
+    .config("spark.executor.instances", "2") \
     .config("spark.executor.cores", "2") \
-    .config("spark.sql.shuffle.partitions", "8") \
-    .config("spark.master", "local[2]") \
+    .config("spark.storage.memoryFraction", "0.3") \
     .getOrCreate()
+
+spark.conf.set("spark.memory.storageFraction", "0.2")  # Réduit la mémoire pour les données en cache.
+spark.conf.set("spark.memory.fraction", "0.6")  # Optimise la mémoire pour les calculs.
 
 # Charger les données
 df = spark.read.csv("hdfs:///user/root/projet/GlobalTemperatures.csv", header=True, inferSchema=True)
