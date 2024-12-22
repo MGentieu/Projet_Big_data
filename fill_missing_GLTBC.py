@@ -75,7 +75,11 @@ def fill_missing_values(file_path, output_path):
 	# Conversion des colonnes AverageTemperature et AverageTemperatureUncertainty en Double
 	df = df.withColumn("AverageTemperature", col("AverageTemperature").cast(DoubleType()))
 	df = df.withColumn("AverageTemperatureUncertainty", col("AverageTemperatureUncertainty").cast(DoubleType()))
-
+	df = df.withColumn("year", split(col("dt"), "-").getItem(0).cast(IntegerType()))
+	df = df.withColumn("month", split(col("dt"), "-").getItem(1).cast(IntegerType()))
+	df = df.withColumn("day", split(col("dt"), "-").getItem(2).cast(IntegerType()))
+	# Supprimer la colonne "dt"
+	df = df.drop("dt")
 	# Convertir le DataFrame en RDD pour un traitement partitionné
 	original_rdd = df.rdd
 
@@ -87,7 +91,8 @@ def fill_missing_values(file_path, output_path):
 	print("Exemple de lignes dans le RDD traité :")
 	print(filled_rdd.take(5))
 
-	filled_df = spark.createDataFrame(filled_rdd, schema=["dt", "AverageTemperature", "AverageTemperatureUncertainty", "Country"])
+	filled_df = spark.createDataFrame(filled_rdd, schema=["AverageTemperature", "AverageTemperatureUncertainty", "Country","year",
+	"month","day"])
 	filled_df.show(15)
 
 	# Regrouper les partitions en une seule

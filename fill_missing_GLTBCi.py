@@ -66,10 +66,16 @@ def fill_missing_values(file_path, output_path):
     df = spark.read.csv(file_path, header=True, inferSchema=True)
     df = df.withColumn("AverageTemperature", col("AverageTemperature").cast(DoubleType()))
     df = df.withColumn("AverageTemperatureUncertainty", col("AverageTemperatureUncertainty").cast(DoubleType()))
+    df = df.withColumn("year", split(col("dt"), "-").getItem(0).cast(IntegerType()))
+    df = df.withColumn("month", split(col("dt"), "-").getItem(1).cast(IntegerType()))
+    df = df.withColumn("day", split(col("dt"), "-").getItem(2).cast(IntegerType()))
+
+    # Supprimer la colonne "dt"
+    df = df.drop("dt")
 
     original_rdd = df.rdd.repartition(8)  # Ajustez le nombre de partitions
     filled_rdd = original_rdd.mapPartitions(process_partition)
-    mySchema =["dt", "AverageTemperature", "AverageTemperatureUncertainty","City", "Country", "Latitude", "Longitude"] 
+    mySchema =["AverageTemperature", "AverageTemperatureUncertainty","City", "Country", "Latitude", "Longitude", "year", "month", "day"] 
     filled_df = spark.createDataFrame(filled_rdd, schema=mySchema)
     filled_df.coalesce(1).write.option("header", True).mode("overwrite").csv(output_path)
     time.sleep(1)

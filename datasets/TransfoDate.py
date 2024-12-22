@@ -19,7 +19,7 @@ def rename_hdfs_file(hdfs_path, title):
                 subprocess.run(["hdfs", "dfs", "-mv", file_path, new_path], check=True)
                 print(f"Fichier renommé : {file_path} -> {new_path}")
                 return new_path
-        subprocess.run(["hdfs", "dfs", "-rmdir", f"{hdfs_path}.csv"], check=True)
+        subprocess.run(["hdfs", "dfs", "-rmdir", f"{hdfs_path}"], check=True)
     except Exception as e:
         print(f"Erreur dans le renommage : {e}")
 
@@ -60,13 +60,11 @@ if __name__ == "__main__":
         "hdfs:///user/root/projet/GlobalLandTemperaturesByState.csv",
         "hdfs:///user/root/projet/GlobalLandTemperaturesByCity.csv"
     ]
-    titles = ["GLTBCo", "GLTBMC", "GT", "GLTBS", "GLTBCi"]
+    titles = ["GLTBCo", "GLTBMC", "GL", "GLTBS", "GLTBCi"]
     output_dir = "hdfs:///user/root/projet"
 
     # Traiter les fichiers CSV
     process_csv_files(csv_files, output_dir, titles)
 
+    # Nettoyer les anciens répertoires si nécessaire
 
-    #Nettoyage final
-    subprocess.run(["hdfs", "dfs", "-rmdir","projet/GT"], check=True)
-    subprocess.run(["hdfs", "dfs", "-rmdir","projet/GLTB*"], check=True)
