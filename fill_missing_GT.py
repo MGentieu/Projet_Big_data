@@ -18,7 +18,7 @@ def rename_hdfs_file(hdfs_path):
 def process_partition(rows):
     rows = list(rows)  # Convertir les lignes en une liste modifiable
     initial_rows = rows.copy()
-"""
+
     for i in range(len(rows)):
         if rows[i][0] is None or rows[i][2] is None or rows[i][4] is None or rows[i][6] is None:  # Vérifie les valeurs manquantes
             prev_lavg_temp, next_lavg_temp = None, None
@@ -92,15 +92,15 @@ def process_partition(rows):
                 float(avg_min_temp) if avg_min_temp is not None else None,
                 rows[i][5],
                 float(avg_lo_avg_temp) if avg_lo_avg_temp is not None else None,
-                rows[i][7], #l and o uncertainty
-                rows[i][8], #year
-                rows[i][9], #month
-                rows[i][10] #day
+                rows[i][7], # l and o uncertainty
+                rows[i][8], # year
+                rows[i][9], # month
+                rows[i][10] # day
             )
-"""
+
     return rows
 
-def fill_missing_values(file_path, output_path, initial_path):
+def fill_missing_values(file_path, output_path):
     spark = SparkSession.builder \
         .appName("Handle Missing Values") \
         .getOrCreate()
@@ -130,16 +130,15 @@ def fill_missing_values(file_path, output_path, initial_path):
         StructField("day", IntegerType(), True)
     ])
 
-    #filled_df = spark.createDataFrame(filled_rdd, schema=schema)
-    #subprocess.run(["hdfs", "dfs", "-rm", f"{initial_path}"], check=True)
-    #filled_df.coalesce(1).write.option("header", True).mode("overwrite").csv(output_path)
+    filled_df = spark.createDataFrame(filled_rdd, schema=schema)
+    #subprocess.run(["hdfs", "dfs", "-rm", f"{file_path}"], check=True)
+    filled_df.coalesce(1).write.option("header", True).mode("overwrite").csv(output_path)
 
     time.sleep(1)
-    #rename_hdfs_file(output_path)
+    rename_hdfs_file(output_path)
 
 if __name__ == "__main__":
-    input_csv_path = "hdfs:///user/root/projet/GlobalTemperatures.csv"
+    input_csv_path = "hdfs:///user/root/projet/GT.csv"
     output_csv_path = "hdfs:///user/root/projet/GT_doc.csv"
-    initial_path = "hdfs:///user/root/projet/GT.csv"
-    fill_missing_values(input_csv_path, output_csv_path, initial_path)
+    fill_missing_values(input_csv_path, output_csv_path)
 
